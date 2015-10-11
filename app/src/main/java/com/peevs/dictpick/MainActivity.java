@@ -1,12 +1,10 @@
 package com.peevs.dictpick;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,6 +16,9 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.peevs.dictpick.settings.Settings;
+import com.peevs.dictpick.settings.SettingsActivity;
 
 import java.util.List;
 
@@ -35,12 +36,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        ChallengeManager cm = new ChallengeManager(this);
+        cm.setRecurringChallenge(
+                sharedPrefs.getString(Settings.PREF_KEY_RECURRING_CHALLENGE_FREQUENCY, "NONE"));
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
+
         return true;
     }
 
@@ -52,8 +62,10 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         switch (id) {
-            case R.id.action_5:
-                scheduleNotification(8000);
+            case R.id.action_settings:
+                Log.i(TAG, "settings option is sellected");
+                Intent startSettings = new Intent(this, SettingsActivity.class);
+                startActivity(startSettings);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -80,19 +92,6 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout getTranslationsLayout() {
         return (LinearLayout) this.findViewById(R.id.layout_translation);
     }
-
-    private void scheduleNotification(int delay) {
-        // intent to invoke the NotificationPublisher
-        Intent notificationIntent = new Intent(this, NotificationPublisher.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, notificationIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
-
-        // AlarmManager will fire intent for the NotificationPublisher after specified time elapses
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                SystemClock.elapsedRealtime() + delay, delay, pendingIntent);
-    }
-
 
     EditText getSrcTextBox() {
         return (EditText) this.findViewById(R.id.edit_srcText);
@@ -155,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
 
             // params[0] - the source text
             // params[1] - the target text
-            ExamDbFacade examDbFacade =  new ExamDbFacade(new ExamDbHelper(MainActivity.this));
+            ExamDbFacade examDbFacade = new ExamDbFacade(new ExamDbHelper(MainActivity.this));
             return examDbFacade.saveTranslation(params[0], params[1], Constants.S_LANG,
                     Constants.T_LANG);
         }

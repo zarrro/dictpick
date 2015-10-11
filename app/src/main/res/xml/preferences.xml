@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:key="key_pref_challenge_notifications"
+        android:title="@string/pref_challenge_notification"
+        android:entries="@array/challenge_frequency"
+        android:entryValues="@array/challenge_frequency"
+        android:defaultValue="NONE" />
+
+</PreferenceScreen>
