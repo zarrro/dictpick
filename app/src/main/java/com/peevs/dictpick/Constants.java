@@ -9,4 +9,5 @@ public final class Constants {
 
     public static final String S_LANG = "en";
     public static final String T_LANG = "bg";
+
 }

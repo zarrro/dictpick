@@ -2,10 +2,24 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <ListPreference
-        android:key="key_pref_challenge_notifications"
-        android:title="@string/pref_challenge_notification"
+        android:defaultValue="NONE"
         android:entries="@array/challenge_frequency"
         android:entryValues="@array/challenge_frequency"
-        android:defaultValue="NONE" />
+        android:key="key_pref_challenge_notifications"
+        android:title="@string/pref_challenge_notification" />
+
+    <ListPreference
+        android:defaultValue="EN"
+        android:entries="@array/language"
+        android:entryValues="@array/language"
+        android:key="key_pref_src_lang"
+        android:title="@string/pref_source_language" />
+
+    <ListPreference
+        android:defaultValue="BG"
+        android:entries="@array/language"
+        android:entryValues="@array/language"
+        android:key="key_pref_target_lang"
+        android:title="@string/pref_target_language" />
 
 </PreferenceScreen>

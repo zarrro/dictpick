@@ -7,6 +7,8 @@
     <string name="menu_settings">Settings</string>
 
     <string name="pref_challenge_notification">Show challenge notifications</string>
+    <string name="pref_source_language">Source language</string>
+    <string name="pref_target_language">Target language</string>
 
 
 </resources>

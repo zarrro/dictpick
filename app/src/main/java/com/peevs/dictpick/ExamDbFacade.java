@@ -91,71 +91,20 @@ public class ExamDbFacade {
         this.sqliteHelper = sqliteHelper;
     }
 
-    public TestQuestion getRandomTestQuestion(int wrongOptionsCount) {
-        Cursor c = null;
+    public TestQuestion getRandomTestQuestion(Language srcLang, Language targetLang, int wrongOptionsCount) {
         SQLiteDatabase examDb = null;
+        Cursor c = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
-
-            String[] projection = {
-                    ExamDbContract.WordsTable.S_TEXT,
-                    ExamDbContract.WordsTable.T_TEXT,
-                    ExamDbContract.WordsTable._ID
-            };
-
-            c = examDb.query(
-                    ExamDbContract.WordsTable.TABLE_NAME,  // The table to query
-                    projection,             // The columns to return
-                    null,                   // The columns for the WHERE clause
-                    null,                   // The values for the WHERE clause
-                    null,                   // don't group the rows
-                    null,                   // don't filter by row groups
-                    null                    // The sort order
-            );
-
-            int rowsCount = 0;
-            if (c == null || (rowsCount = c.getCount()) == 0) {
-                Log.e(TAG, "no exam data is retrieved");
+            c = queryAllTranslations(srcLang, targetLang, examDb);
+            if(c.getCount() <= 0) {
                 return null;
             }
-            Log.i(TAG, String.format("%s exam records retrieved", rowsCount));
-
-            int[] wordIndexes =
-                    Utils.generateUniqueRandomNumbers(wrongOptionsCount + 1, rowsCount, rand);
-
-            // which of the randomly generated word indexes will be the translation in question
-            int correctAnswer = rand.nextInt(wordIndexes.length);
-            Log.d(TAG, String.format("correct answer: %s", correctAnswer));
-
-            int questionIndex = wordIndexes[correctAnswer];
-            Log.d(TAG, String.format("questionIndex = %s", questionIndex));
-
-            // 0 - is the source lang column, 1 - is the target lang column
-            final int SOURCE_LANG_COLUMN = 0;
-            final int TARGET_LANG_COLUMN = 1;
-
-            TestQuestion result = new TestQuestion();
-            result.setQuestion(wordEntryFromCursor(questionIndex, SOURCE_LANG_COLUMN, c));
-            result.setCorrectAnswerIndex(correctAnswer);
-            // all the translations follow
-            WordEntry[] answers = new WordEntry[wordIndexes.length];
-            for (int i = 0; i < answers.length; i++) {
-                answers[i] = wordEntryFromCursor(wordIndexes[i], TARGET_LANG_COLUMN, c);
-            }
-            result.setOptions(answers);
-            Log.i(TAG, "getRandomTestQuestion - " + result.toString());
-            return result;
+            return getRandomTestQuestion(wrongOptionsCount, c);
         } finally {
-            if (examDb != null) {
-                examDb.close();
-            }
+            if (c != null) c.close();
+            if (examDb != null) examDb.close();
         }
-    }
-
-    private WordEntry wordEntryFromCursor(int row, int textColumn, Cursor c) {
-        c.moveToPosition(row);
-        // column 2 - _id
-        return new WordEntry(c.getInt(2), c.getString(textColumn));
     }
 
     public long saveTranslation(String sourceText, String targetText, String sourceLang,
@@ -235,4 +184,82 @@ public class ExamDbFacade {
             }
         }
     }
+
+    private Cursor queryAllTranslations(Language srcLang, Language targetLang, SQLiteDatabase examDb) {
+        Log.d(TAG, String.format("getAllTranslations - srcLang = %s, targetLang = %s",
+                srcLang.toString(), targetLang.toString()));
+
+        Cursor c = null;
+        try {
+            examDb = sqliteHelper.getReadableDatabase();
+
+            String[] projection = {
+                    ExamDbContract.WordsTable.S_TEXT,
+                    ExamDbContract.WordsTable.T_TEXT,
+                    ExamDbContract.WordsTable._ID
+            };
+
+            String whereClause = String.format("%s = '%s' and %s = '%s'",
+                    ExamDbContract.WordsTable.S_LANG, srcLang.toString().toLowerCase(),
+                    ExamDbContract.WordsTable.T_LANG, targetLang.toString().toLowerCase());
+
+            c = examDb.query(
+                    ExamDbContract.WordsTable.TABLE_NAME,  // The table to query
+                    projection,             // The columns to return
+                    whereClause,            // The columns for the WHERE clause
+                    null,                   // The values for the WHERE clause
+                    null,                   // don't group the rows
+                    null,                   // don't filter by row groups
+                    null                    // The sort order
+            );
+
+
+            if (c == null || c.getCount() == 0) {
+                Log.d(TAG, "getAllTranslations - no translations retrieved");
+            } else {
+                Log.d(TAG, "getAllTranslations - " + c.getCount() + " translations retrieved");
+            }
+        } finally {
+            if (examDb != null) {
+                examDb.close();
+            }
+        }
+
+        return c;
+    }
+
+    private TestQuestion getRandomTestQuestion(int wrongOptionsCount, Cursor c) {
+        int[] wordIndexes =
+                Utils.generateUniqueRandomNumbers(wrongOptionsCount + 1, c.getCount(), rand);
+
+        // which of the randomly generated word indexes will be the translation in question
+        int correctAnswer = rand.nextInt(wordIndexes.length);
+        Log.d(TAG, String.format("correct answer: %s", correctAnswer));
+
+        int questionIndex = wordIndexes[correctAnswer];
+        Log.d(TAG, String.format("questionIndex = %s", questionIndex));
+
+        // 0 - is the source lang column, 1 - is the target lang column
+        final int SOURCE_LANG_COLUMN = 0;
+        final int TARGET_LANG_COLUMN = 1;
+
+        TestQuestion result = new TestQuestion();
+        result.setQuestion(wordEntryFromCursor(questionIndex, SOURCE_LANG_COLUMN, c));
+        result.setCorrectAnswerIndex(correctAnswer);
+        // all the translations follow
+        WordEntry[] answers = new WordEntry[wordIndexes.length];
+        for (int i = 0; i < answers.length; i++) {
+            answers[i] = wordEntryFromCursor(wordIndexes[i], TARGET_LANG_COLUMN, c);
+        }
+        result.setOptions(answers);
+        Log.i(TAG, "getRandomTestQuestion - " + result.toString());
+        return result;
+    }
+
+    private WordEntry wordEntryFromCursor(int row, int textColumn, Cursor c) {
+        c.moveToPosition(row);
+        // column 2 - _id
+        return new WordEntry(c.getInt(2), c.getString(textColumn));
+    }
+
 }

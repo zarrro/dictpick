@@ -1,9 +1,11 @@
 package com.peevs.dictpick;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.TypedValue;
@@ -11,6 +13,7 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -26,6 +29,8 @@ public class ExamActivity extends AppCompatActivity {
     private static final String TAG = "ExamActivity";
 
     private Random rand = new Random(System.currentTimeMillis());
+    private Language srcLang = null;
+    private Language targetLang = null;
 
     class GenerateTestTask extends AsyncTask<Void, Void, TestQuestion> {
 
@@ -39,7 +44,8 @@ public class ExamActivity extends AppCompatActivity {
         protected TestQuestion doInBackground(Void... n) {
             Log.d(TAG, "doInBackground started...");
             ExamDbFacade examDb = new ExamDbFacade(new ExamDbHelper(ExamActivity.this));
-            return examDb.getRandomTestQuestion(TestQuestion.WRONG_OPTIONS_COUNT);
+            return examDb.getRandomTestQuestion(srcLang, targetLang,
+                    TestQuestion.WRONG_OPTIONS_COUNT);
         }
 
         @Override
@@ -51,7 +57,8 @@ public class ExamActivity extends AppCompatActivity {
     /**
      * Insert new answerStat entry and return the new statistics as a result.
      */
-    class UpdateStatsTask extends AsyncTask<ExamDbFacade.AnswerStatsEntry, Void, ExamDbFacade.AnswerStats> {
+    class UpdateStatsTask extends
+            AsyncTask<ExamDbFacade.AnswerStatsEntry, Void, ExamDbFacade.AnswerStats> {
         @Override
         protected ExamDbFacade.AnswerStats doInBackground(ExamDbFacade.AnswerStatsEntry... params) {
             if (params.length != 1)
@@ -64,7 +71,8 @@ public class ExamActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(ExamDbFacade.AnswerStats answerStats) {
-            ExamActivity.this.updateAnswerStatsView(answerStats.getCount(), answerStats.getSuccessRate());
+            ExamActivity.this.updateAnswerStatsView(answerStats.getCount(),
+                    answerStats.getSuccessRate());
         }
     }
 
@@ -180,11 +188,22 @@ public class ExamActivity extends AppCompatActivity {
         }
     }
 
+    private void initLanguages() {
+
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        srcLang = Language.valueOf(sharedPrefs.getString("key_pref_src_lang", "EN"));
+        targetLang = Language.valueOf(sharedPrefs.getString("key_pref_target_lang", "BG"));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.exam);
+        initLanguages();
+
         Intent intent = getIntent();
+
         TestQuestion testQuestion = intent.getParcelableExtra(
                 NotificationPublisher.QUESTION_FROM_NOTIFICATION);
         if (testQuestion != null) {
@@ -210,7 +229,13 @@ public class ExamActivity extends AppCompatActivity {
     }
 
     public void displayTestQuestion(TestQuestion testQuestion) {
-        Log.d(TAG, "displayTestQuestion invoked");
+        Log.d(TAG, "displayTestQuestion invoked, testQuestion = " + testQuestion);
+
+        if (testQuestion == null) {
+            Toast.makeText(ExamActivity.this, "Couldn't retrieve test question...",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
 
         // set the question word
         ((TextView) findViewById(R.id.question_text)).setText(testQuestion.getQuestion().getText());

@@ -8,4 +8,9 @@
         <item>AGRESSIVE</item>
         <item>DEBUG</item>
     </string-array>
+    <string-array
+        name="language">
+        <item>EN</item>
+        <item>BG</item>
+    </string-array>
 </resources>
