@@ -19,11 +19,13 @@ public class Translator {
     public static final String DEFAULT_TRANSLATE_MODE = "at";
 
     public static final String PROTO = "https";
-    public static final String HOST = "translate.google.bg";
+    public static final String HOST = "translate.google.com";
     public static final String QUERY_STRING_TEMPLATE = "/translate_a/single?"
             + "client=a&sl=%s&tl=%s&dt=%s&ie=%s&oe=%s&q=%s";
-    public static final String HTTP_HEADER_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1)"
-            + " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
+//    public static final String HTTP_HEADER_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1)"
+//            + " AppleWebKit/537.36 (HTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
+    public static final String HTTP_HEADER_USER_AGENT =
+        "User-Agent: Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko";
 
     /**
      * Translates the srcText from srcLang to targetLang using HTTP call to google.bg/translate.

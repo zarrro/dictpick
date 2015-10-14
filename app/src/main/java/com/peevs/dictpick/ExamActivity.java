@@ -1,12 +1,9 @@
 package com.peevs.dictpick;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -24,13 +21,10 @@ import java.util.Random;
 /**
  * Created by zarrro on 16.8.2015 г..
  */
-public class ExamActivity extends AppCompatActivity {
+public class ExamActivity extends BaseActivity {
 
     private static final String TAG = "ExamActivity";
-
     private Random rand = new Random(System.currentTimeMillis());
-    private Language srcLang = null;
-    private Language targetLang = null;
 
     class GenerateTestTask extends AsyncTask<Void, Void, TestQuestion> {
 
@@ -188,19 +182,10 @@ public class ExamActivity extends AppCompatActivity {
         }
     }
 
-    private void initLanguages() {
-
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        srcLang = Language.valueOf(sharedPrefs.getString("key_pref_src_lang", "EN"));
-        targetLang = Language.valueOf(sharedPrefs.getString("key_pref_target_lang", "BG"));
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.exam);
-        initLanguages();
 
         Intent intent = getIntent();
 

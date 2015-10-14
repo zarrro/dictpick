@@ -12,5 +12,6 @@
         name="language">
         <item>EN</item>
         <item>BG</item>
+        <item>DE</item>
     </string-array>
 </resources>
