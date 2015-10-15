@@ -1,9 +1,13 @@
 package com.peevs.dictpick;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
+
+import com.peevs.dictpick.settings.SettingsActivity;
 
 /**
  * Created by zarrro on 14.10.2015 г..
@@ -26,6 +30,18 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         initLanguages();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                Intent startSettings = new Intent(this, SettingsActivity.class);
+                startActivity(startSettings);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     protected void initLanguages() {

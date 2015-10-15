@@ -1,5 +1,6 @@
 package com.peevs.dictpick;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -33,53 +34,51 @@ public class Translator {
      * @param targetLang - the language in which the srcText to be translated
      * @return - list of translations, by decreasing popularity (the most popular translation is first)
      */
-    public static List<String> translate(String srcText, String srcLang, String targetLang) {
+    public static List<String> translate(String srcText, String srcLang, String targetLang)
+            throws IOException {
         return translate(srcText, srcLang, targetLang, DEFAULT_TRANSLATE_MODE, DEFAULT_CHARSET);
     }
 
     public static List<String> translate(String srcText, String srcLang, String targetLang,
-                                         String mode, String charset) {
-        try {
-            URL url = new URL(PROTO, HOST, String.format(QUERY_STRING_TEMPLATE, srcLang,
-                    targetLang, mode, charset, charset, URLEncoder.encode(srcText, charset)));
-            URLConnection gooCon = url.openConnection();
-            gooCon.setRequestProperty("User-Agent", HTTP_HEADER_USER_AGENT);
+                                         String mode, String charset) throws IOException {
 
-            Reader in = new InputStreamReader(gooCon.getInputStream(), Charset.forName("UTF-8"));
+        URL url = new URL(PROTO, HOST, String.format(QUERY_STRING_TEMPLATE, srcLang,
+                targetLang, mode, charset, charset, URLEncoder.encode(srcText, charset)));
+        URLConnection gooCon = url.openConnection();
+        gooCon.setRequestProperty("User-Agent", HTTP_HEADER_USER_AGENT);
 
-            LinkedList<String> res = new LinkedList<String>();
-            if (in != null) {
-                boolean w = false;
-                try {
-                    int val = -1;
-                    char c = '\n';
-                    StringWriter sw = null;
+        Reader in = new InputStreamReader(gooCon.getInputStream(), Charset.forName("UTF-8"));
 
-                    while ((val = in.read()) != -1) {
-                        c = (char) val;
-                        if (c == '"') {
-                            w = !w;
-                            if (sw == null) {
-                                sw = new StringWriter();
-                            } else {
-                                String word = sw.toString();
-                                // skip src lang and text in the result
-                                if (!(word.equals(srcLang) || word.equalsIgnoreCase(srcText))) {
-                                    res.add(sw.toString());
-                                }
-                                sw = null;
+        LinkedList<String> res = new LinkedList<String>();
+        if (in != null) {
+            boolean w = false;
+            try {
+                int val = -1;
+                char c = '\n';
+                StringWriter sw = null;
+
+                while ((val = in.read()) != -1) {
+                    c = (char) val;
+                    if (c == '"') {
+                        w = !w;
+                        if (sw == null) {
+                            sw = new StringWriter();
+                        } else {
+                            String word = sw.toString();
+                            // skip src lang and text in the result
+                            if (!(word.equals(srcLang) || word.equalsIgnoreCase(srcText))) {
+                                res.add(sw.toString());
                             }
-                        } else if (w) {
-                            sw.write(c);
+                            sw = null;
                         }
+                    } else if (w) {
+                        sw.write(c);
                     }
-                } finally {
-                    in.close();
                 }
+            } finally {
+                in.close();
             }
-            return res;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
+        return res;
     }
 }

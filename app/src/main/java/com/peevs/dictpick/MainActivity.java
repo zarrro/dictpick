@@ -7,15 +7,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.peevs.dictpick.settings.SettingsActivity;
-
+import java.io.IOException;
 import java.util.List;
 
 import static android.view.View.OnClickListener;
@@ -39,29 +37,14 @@ public class MainActivity extends BaseActivity {
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        switch (id) {
-            case R.id.action_settings:
-                Log.i(TAG, "settings option is sellected");
-                Intent startSettings = new Intent(this, SettingsActivity.class);
-                startActivity(startSettings);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
     public void translate(View v) {
-        EditText editTextSrc = (EditText) findViewById(R.id.edit_srcText);
-        String val = editTextSrc.getText().toString();
-        if (val != null && !(val = val.trim()).isEmpty()) {
-            new TranslateTask().execute(val);
+        // check if there is any translations (i.e. if Translate is not already clicked)
+        if(getTranslationsLayout().getChildCount() == 0) {
+            EditText editTextSrc = (EditText) findViewById(R.id.edit_srcText);
+            String val = editTextSrc.getText().toString();
+            if (val != null && !(val = val.trim()).isEmpty()) {
+                new TranslateTask().execute(val);
+            }
         }
     }
 
@@ -86,6 +69,7 @@ public class MainActivity extends BaseActivity {
 
         private static final String TAG = "GenerateTestTask";
         private String srcText = null;
+        private String errorMessage = null;
 
         @Override
         protected List<String> doInBackground(String... params) {
@@ -96,9 +80,16 @@ public class MainActivity extends BaseActivity {
 
             srcText = params[0];
             Log.d(TAG, String.format("doInBackground - srcText = %s", srcText));
-            return Translator.translate(params[0],
-                    MainActivity.this.srcLang.toString().toLowerCase(),
-                    MainActivity.this.targetLang.toString().toLowerCase());
+            List<String> result = null;
+            try {
+                result = Translator.translate(params[0],
+                        MainActivity.this.srcLang.toString().toLowerCase(),
+                        MainActivity.this.targetLang.toString().toLowerCase());
+            } catch (IOException e) {
+                errorMessage = "Translation service invocation failed...";
+                Log.e(TAG, errorMessage, e);
+            }
+            return result;
         }
 
         @Override
@@ -124,6 +115,8 @@ public class MainActivity extends BaseActivity {
                 // on the next text change result will be cleared
                 MainActivity.this.getSrcTextBox().
                         addTextChangedListener(new ClearTranslationsListener());
+            } else if (errorMessage != null) {
+                Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
             }
         }
     }
