@@ -185,7 +185,8 @@ public class ExamDbFacade {
         }
     }
 
-    private Cursor queryAllTranslations(Language srcLang, Language targetLang, SQLiteDatabase examDb) {
+    private Cursor queryAllTranslations(Language srcLang, Language targetLang,
+                                        SQLiteDatabase examDb) {
         Log.d(TAG, String.format("getAllTranslations - srcLang = %s, targetLang = %s",
                 srcLang.toString(), targetLang.toString()));
 
@@ -239,17 +240,18 @@ public class ExamDbFacade {
         int questionIndex = wordIndexes[correctAnswer];
         Log.d(TAG, String.format("questionIndex = %s", questionIndex));
 
-        // 0 - is the source lang column, 1 - is the target lang column
-        final int SOURCE_LANG_COLUMN = 0;
-        final int TARGET_LANG_COLUMN = 1;
+        // 0 - is the source lang column, 1 - is the target lang
+        // randomly select whether the question is from source to target lang or vise versa
+        int srcLangColumn = rand.nextInt(2);
+        int targetLangColumn = 1 - srcLangColumn;
 
         TestQuestion result = new TestQuestion();
-        result.setQuestion(wordEntryFromCursor(questionIndex, SOURCE_LANG_COLUMN, c));
+        result.setQuestion(wordEntryFromCursor(questionIndex, srcLangColumn, c));
         result.setCorrectAnswerIndex(correctAnswer);
         // all the translations follow
         WordEntry[] answers = new WordEntry[wordIndexes.length];
         for (int i = 0; i < answers.length; i++) {
-            answers[i] = wordEntryFromCursor(wordIndexes[i], TARGET_LANG_COLUMN, c);
+            answers[i] = wordEntryFromCursor(wordIndexes[i], targetLangColumn, c);
         }
         result.setOptions(answers);
         Log.i(TAG, "getRandomTestQuestion - " + result.toString());
