@@ -1,7 +1,13 @@
 package com.peevs.dictpick;
 
+import android.util.Log;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URL;
@@ -16,6 +22,8 @@ import java.util.List;
  */
 public class Translator {
 
+    public static final String TAG = Translator.class.getSimpleName();
+
     public static final String DEFAULT_CHARSET = "UTF-8";
     public static final String DEFAULT_TRANSLATE_MODE = "at";
 
@@ -23,6 +31,8 @@ public class Translator {
     public static final String HOST = "translate.google.com";
     public static final String QUERY_STRING_TEMPLATE = "/translate_a/single?"
             + "client=t&sl=%s&tl=%s&dt=%s&ie=%s&oe=%s&q=%s&tk=509474|121316";
+    public static final String QUERY_STRING_TTS_TEMPLATE =
+            "/translate_tts?&client=t&tl=%s&ie=UTF-8&q=%s";
     public static final String HTTP_HEADER_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1)"
             + " AppleWebKit/537.36 (HTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
 
@@ -80,5 +90,45 @@ public class Translator {
             }
         }
         return res;
+    }
+
+    public static void textToSpeach(String text, Language lang, OutputStream outputStream)
+            throws IOException {
+        if (text == null || text.isEmpty())
+            throw new IllegalArgumentException("text == null || text.isEmpty()");
+        if (outputStream == null)
+            throw new IllegalArgumentException("outputStream == null");
+        String langStr = null;
+        switch (lang) {
+            case EN:
+                langStr = "en-us";
+                break;
+            default:
+                Log.i(TAG, "Default translation language is used");
+                langStr = "en-us";
+        }
+
+        InputStream in = null;
+        try {
+            URL url = new URL(PROTO, HOST, String.format(QUERY_STRING_TTS_TEMPLATE, langStr, text));
+            URLConnection gooCon = url.openConnection();
+            gooCon.setRequestProperty("User-Agent", HTTP_HEADER_USER_AGENT);
+            gooCon.setRequestProperty("x-client-data", "CKK2yQEIqbbJAQjEtskBCOmIygEI/ZXKAQi8mMoB");
+
+            in = gooCon.getInputStream();
+            outputStream = new FileOutputStream(new File("player.mp3"));
+
+            byte[] buf = new byte[512];
+            while (in.read(buf) != -1) {
+                outputStream.write(buf);
+            }
+        } finally {
+            try {
+                if (in != null)
+                    in.close();
+            } catch (IOException e) {
+                Log.wtf(TAG, e);
+            }
+        }
     }
 }

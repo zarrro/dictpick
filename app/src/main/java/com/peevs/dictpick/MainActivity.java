@@ -13,7 +13,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 import static android.view.View.OnClickListener;
@@ -39,7 +42,7 @@ public class MainActivity extends BaseActivity {
 
     public void translate(View v) {
         // check if there is any translations (i.e. if Translate is not already clicked)
-        if(getTranslationsLayout().getChildCount() == 0) {
+        if (getTranslationsLayout().getChildCount() == 0) {
             EditText editTextSrc = (EditText) findViewById(R.id.edit_srcText);
             String val = editTextSrc.getText().toString();
             if (val != null && !(val = val.trim()).isEmpty()) {
@@ -132,12 +135,33 @@ public class MainActivity extends BaseActivity {
                 return -1l;
             }
 
-            // params[0] - the source text
-            // params[1] - the target text
+            final String sourceText = params[0];
+            final String targetText = params[1];
+
+            // save to DB
             ExamDbFacade examDbFacade = new ExamDbFacade(new ExamDbHelper(MainActivity.this));
-            return examDbFacade.saveTranslation(params[0], params[1],
+            long wordId = examDbFacade.saveTranslation(sourceText, targetText,
                     MainActivity.this.srcLang.toString().toLowerCase(),
                     MainActivity.this.targetLang.toString().toLowerCase());
+
+            // download text to speech file
+            OutputStream outputStream = null;
+            try {
+                File speechFile = new File(getFilesDir(),
+                        String.format("tts_%s_%s", srcLang, wordId));
+                outputStream = new FileOutputStream(speechFile);
+                Log.i(TAG,"Download text to speech file: " + speechFile.getAbsolutePath());
+                Translator.textToSpeach(sourceText, MainActivity.this.srcLang, outputStream);
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to store text to speech file ", e);
+            } finally {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    Log.wtf(TAG, e);
+                }
+            }
+            return wordId;
         }
 
         @Override
@@ -152,6 +176,7 @@ public class MainActivity extends BaseActivity {
                         Toast.LENGTH_SHORT).show();
             }
         }
+
     }
 
     class ClearTranslationsListener implements TextWatcher {
