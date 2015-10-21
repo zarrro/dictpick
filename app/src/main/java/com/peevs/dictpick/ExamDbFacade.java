@@ -10,13 +10,23 @@ import android.util.Log;
 import java.util.Date;
 import java.util.Random;
 
-import static com.peevs.dictpick.ExamDbContract.UNIQUE_CONTRAINT_FAILED_ERR_CODE;
-import static com.peevs.dictpick.TestQuestion.*;
+import static com.peevs.dictpick.TestQuestion.WordEntry;
 
 /**
  * Created by zarrro on 13.9.2015 г..
  */
 public class ExamDbFacade {
+
+    public static class AlreadyExistsException extends Exception {
+
+        public AlreadyExistsException() {
+
+        }
+
+        public AlreadyExistsException(String msg) {
+            super(msg);
+        }
+    }
 
     public static class AnswerStatsEntry {
 
@@ -108,7 +118,7 @@ public class ExamDbFacade {
     }
 
     public long saveTranslation(String sourceText, String targetText, String sourceLang,
-                                String targetLang) {
+                                String targetLang) throws AlreadyExistsException {
 
         Log.i(TAG, String.format("saveTranslation - sourceText %s, targetText %s, sourceLang %s," +
                 "targetLang %s", sourceText, targetText, sourceLang, targetLang));
@@ -124,8 +134,7 @@ public class ExamDbFacade {
             values.put(ExamDbContract.WordsTable.T_LANG, targetLang);
             return examDb.insertOrThrow(ExamDbContract.WordsTable.TABLE_NAME, "null", values);
         } catch (SQLiteConstraintException e) {
-            Log.w(TAG, String.format("translation %s -> %s already exists", sourceText, targetText));
-            return new Long(UNIQUE_CONTRAINT_FAILED_ERR_CODE);
+            throw new AlreadyExistsException("translation %s -> %s already exists");
         } finally {
             if (examDb != null) {
                 examDb.close();

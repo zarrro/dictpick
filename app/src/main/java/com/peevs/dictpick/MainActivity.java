@@ -14,9 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 
 import static android.view.View.OnClickListener;
@@ -26,6 +24,7 @@ import static com.peevs.dictpick.ExamDbContract.UNIQUE_CONTRAINT_FAILED_ERR_CODE
 public class MainActivity extends BaseActivity {
 
     private static final String TAG = "MainActivity";
+    private String errorMessage = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,12 +75,13 @@ public class MainActivity extends BaseActivity {
 
         @Override
         protected List<String> doInBackground(String... params) {
-            if (params == null || params.length != 1) {
+            if (params == null || params.length != 1 || params[0] == null || params[0].isEmpty()) {
                 Log.e(TAG, "doInBackground invoked with invalid params");
                 return null;
             }
 
-            srcText = params[0];
+            srcText = params[0].trim().toLowerCase();
+
             Log.d(TAG, String.format("doInBackground - srcText = %s", srcText));
             List<String> result = null;
             try {
@@ -98,12 +98,16 @@ public class MainActivity extends BaseActivity {
         @Override
         protected void onPostExecute(List<String> result) {
             if (result != null) {
-
                 OnClickListener textMarker = new OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         // save the translation clicked to the exam DB
                         new SaveWordTask().execute(srcText, ((TextView) v).getText().toString());
+                        File speechFile = Utils.getSpeechFile(MainActivity.this.getFilesDir(),
+                                srcText, MainActivity.this.srcLang);
+                        if (!speechFile.exists()) {
+                            new TextToSpeechTask(srcText, MainActivity.this.srcLang, speechFile);
+                        }
                     }
                 };
 
@@ -120,6 +124,7 @@ public class MainActivity extends BaseActivity {
                         addTextChangedListener(new ClearTranslationsListener());
             } else if (errorMessage != null) {
                 Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                errorMessage = null;
             }
         }
     }
@@ -138,36 +143,31 @@ public class MainActivity extends BaseActivity {
             final String sourceText = params[0];
             final String targetText = params[1];
 
+            long wordId = -1;
+
             // save to DB
             ExamDbFacade examDbFacade = new ExamDbFacade(new ExamDbHelper(MainActivity.this));
-            long wordId = examDbFacade.saveTranslation(sourceText, targetText,
-                    MainActivity.this.srcLang.toString().toLowerCase(),
-                    MainActivity.this.targetLang.toString().toLowerCase());
-
-            // download text to speech file
-            OutputStream outputStream = null;
             try {
-                File speechFile = new File(getFilesDir(),
-                        String.format("tts_%s_%s", srcLang, wordId));
-                outputStream = new FileOutputStream(speechFile);
-                Log.i(TAG,"Download text to speech file: " + speechFile.getAbsolutePath());
-                Translator.textToSpeach(sourceText, MainActivity.this.srcLang, outputStream);
-            } catch (IOException e) {
-                Log.e(TAG, "Failed to store text to speech file ", e);
-            } finally {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    Log.wtf(TAG, e);
-                }
+                wordId = examDbFacade.saveTranslation(sourceText, targetText,
+                        MainActivity.this.srcLang.toString().toLowerCase(),
+                        MainActivity.this.targetLang.toString().toLowerCase());
+                MainActivity.this.questionWordId = wordId;
+            }catch (ExamDbFacade.AlreadyExistsException e) {
+                errorMessage = e.getMessage();
             }
+
             return wordId;
         }
 
         @Override
         protected void onPostExecute(Long result) {
             if (result == null || result == -1) {
-                Toast.makeText(MainActivity.this, "Error on saving...", Toast.LENGTH_SHORT).show();
+                if(errorMessage != null) {
+                    Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                    errorMessage = null;
+                } else {
+                    Toast.makeText(MainActivity.this, "Error on saving...", Toast.LENGTH_SHORT).show();
+                }
             } else if (result.intValue() == UNIQUE_CONTRAINT_FAILED_ERR_CODE) {
                 Toast.makeText(MainActivity.this, "Translation is already saved.",
                         Toast.LENGTH_SHORT).show();

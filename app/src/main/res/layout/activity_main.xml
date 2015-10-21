@@ -54,4 +54,13 @@
 
     </LinearLayout>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Listen"
+        android:id="@+id/btn_listen_main"
+        android:layout_below="@+id/button_start_test"
+        android:layout_alignEnd="@+id/button_start_test"
+        android:onClick="sayQuestion" />
+
 </RelativeLayout>

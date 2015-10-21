@@ -70,13 +70,6 @@ public class ExamActivity extends BaseActivity {
         }
     }
 
-    void updateStats(int questionWordId, int wrongAnswerId) {
-        ExamDbFacade.AnswerStatsEntry statsIn = new ExamDbFacade.AnswerStatsEntry();
-        statsIn.setQuestionWordId(questionWordId);
-        statsIn.setWrongAnswerWordId(wrongAnswerId);
-        statsIn.setTimestamp(new Date());
-        (new UpdateStatsTask()).execute(statsIn);
-    }
 
     /**
      * Factory for the test question answer views.
@@ -182,6 +175,14 @@ public class ExamActivity extends BaseActivity {
         }
     }
 
+    void updateStats(int questionWordId, int wrongAnswerId) {
+        ExamDbFacade.AnswerStatsEntry statsIn = new ExamDbFacade.AnswerStatsEntry();
+        statsIn.setQuestionWordId(questionWordId);
+        statsIn.setWrongAnswerWordId(wrongAnswerId);
+        statsIn.setTimestamp(new Date());
+        (new UpdateStatsTask()).execute(statsIn);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -209,6 +210,16 @@ public class ExamActivity extends BaseActivity {
         return true;
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
     public void generateTestQuestion(View v) {
         new GenerateTestTask().execute();
     }
@@ -224,6 +235,7 @@ public class ExamActivity extends BaseActivity {
 
         // set the question word
         ((TextView) findViewById(R.id.question_text)).setText(testQuestion.getQuestion().getText());
+        questionWordId = testQuestion.getQuestion().getId();
 
         LinearLayout answersLayout = (LinearLayout) findViewById(R.id.layout_answers);
 
@@ -236,6 +248,7 @@ public class ExamActivity extends BaseActivity {
             answersLayout.addView(optionView);
         }
     }
+
 
     public void updateAnswerStatsView(long count, float successRate) {
 

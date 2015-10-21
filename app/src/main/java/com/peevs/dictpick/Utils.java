@@ -1,5 +1,6 @@
 package com.peevs.dictpick;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -7,6 +8,8 @@ import java.util.Random;
  * Created by zarrro on 4.9.2015 г..
  */
 public class Utils {
+
+    private static final String TAG = Utils.class.getSimpleName();
 
     /**
      * Generates array with size n, with unique (no duplicated numbers) in the range 0 to rangeSize.
@@ -45,4 +48,5 @@ public class Utils {
         }
         return result;
     }
+
 }

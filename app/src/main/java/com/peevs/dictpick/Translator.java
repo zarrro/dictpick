@@ -2,8 +2,6 @@ package com.peevs.dictpick;
 
 import android.util.Log;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -114,13 +112,11 @@ public class Translator {
             URLConnection gooCon = url.openConnection();
             gooCon.setRequestProperty("User-Agent", HTTP_HEADER_USER_AGENT);
             gooCon.setRequestProperty("x-client-data", "CKK2yQEIqbbJAQjEtskBCOmIygEI/ZXKAQi8mMoB");
-
             in = gooCon.getInputStream();
-            outputStream = new FileOutputStream(new File("player.mp3"));
 
-            byte[] buf = new byte[512];
-            while (in.read(buf) != -1) {
-                outputStream.write(buf);
+            int i = -1;
+            while ((i = in.read()) != -1) {
+                outputStream.write(i);
             }
         } finally {
             try {
