@@ -110,7 +110,7 @@ public class ExamDbFacade {
             if(c.getCount() <= 0) {
                 return null;
             }
-            return getRandomTestQuestion(wrongOptionsCount, c);
+            return getRandomTestQuestion(srcLang, targetLang, wrongOptionsCount, c);
         } finally {
             if (c != null) c.close();
             if (examDb != null) examDb.close();
@@ -223,7 +223,6 @@ public class ExamDbFacade {
                     null                    // The sort order
             );
 
-
             if (c == null || c.getCount() == 0) {
                 Log.d(TAG, "getAllTranslations - no translations retrieved");
             } else {
@@ -238,7 +237,7 @@ public class ExamDbFacade {
         return c;
     }
 
-    private TestQuestion getRandomTestQuestion(int wrongOptionsCount, Cursor c) {
+    private TestQuestion getRandomTestQuestion(Language srcLang, Language targetLang, int wrongOptionsCount, Cursor c) {
         int[] wordIndexes =
                 Utils.generateUniqueRandomNumbers(wrongOptionsCount + 1, c.getCount(), rand);
 
@@ -251,16 +250,25 @@ public class ExamDbFacade {
 
         // 0 - is the source lang column, 1 - is the target lang
         // randomly select whether the question is from source to target lang or vise versa
-        int srcLangColumn = rand.nextInt(2);
-        int targetLangColumn = 1 - srcLangColumn;
+        int questionColumn = rand.nextInt(2);
+        int answersColumn = 1 - questionColumn;
 
         TestQuestion result = new TestQuestion();
-        result.setQuestion(wordEntryFromCursor(questionIndex, srcLangColumn, c));
+
+        if(questionColumn == 0) {
+            result.setQuestionLanguage(srcLang);
+            result.setOptionLanguage(targetLang);
+        } else {
+            result.setQuestionLanguage(targetLang);
+            result.setOptionLanguage(srcLang);
+        }
+
+        result.setQuestion(wordEntryFromCursor(questionIndex, questionColumn, c));
         result.setCorrectAnswerIndex(correctAnswer);
         // all the translations follow
         WordEntry[] answers = new WordEntry[wordIndexes.length];
         for (int i = 0; i < answers.length; i++) {
-            answers[i] = wordEntryFromCursor(wordIndexes[i], targetLangColumn, c);
+            answers[i] = wordEntryFromCursor(wordIndexes[i], answersColumn, c);
         }
         result.setOptions(answers);
         Log.i(TAG, "getRandomTestQuestion - " + result.toString());

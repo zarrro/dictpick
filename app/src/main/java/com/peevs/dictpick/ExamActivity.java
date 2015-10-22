@@ -235,6 +235,12 @@ public class ExamActivity extends BaseActivity {
 
         // set the question word
         ((TextView) findViewById(R.id.question_text)).setText(testQuestion.getQuestion().getText());
+
+        //TODO: problem with playing BG, so play only srcLang (EN)
+        if(srcLang == testQuestion.getQuestionLanguage()) {
+            sayQuestion(testQuestion.getQuestion().getText(), testQuestion.getQuestionLanguage());
+        }
+
         questionWordId = testQuestion.getQuestion().getId();
 
         LinearLayout answersLayout = (LinearLayout) findViewById(R.id.layout_answers);
@@ -248,7 +254,6 @@ public class ExamActivity extends BaseActivity {
             answersLayout.addView(optionView);
         }
     }
-
 
     public void updateAnswerStatsView(long count, float successRate) {
 

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
@@ -13,7 +14,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -42,11 +42,17 @@ public class MainActivity extends BaseActivity {
     public void translate(View v) {
         // check if there is any translations (i.e. if Translate is not already clicked)
         if (getTranslationsLayout().getChildCount() == 0) {
-            EditText editTextSrc = (EditText) findViewById(R.id.edit_srcText);
-            String val = editTextSrc.getText().toString();
+            String val = getSrcText();
             if (val != null && !(val = val.trim()).isEmpty()) {
                 new TranslateTask().execute(val);
             }
+        }
+    }
+
+    public void sayQuestion(View v) {
+        String val = getSrcText();
+        if(val != null && !val.isEmpty()) {
+            sayQuestion(val);
         }
     }
 
@@ -61,6 +67,11 @@ public class MainActivity extends BaseActivity {
 
     LinearLayout getTranslationsLayout() {
         return (LinearLayout) this.findViewById(R.id.layout_translation);
+    }
+
+    private String getSrcText() {
+        EditText editTextSrc = (EditText) findViewById(R.id.edit_srcText);
+        return editTextSrc.getText().toString();
     }
 
     EditText getSrcTextBox() {
@@ -103,11 +114,6 @@ public class MainActivity extends BaseActivity {
                     public void onClick(View v) {
                         // save the translation clicked to the exam DB
                         new SaveWordTask().execute(srcText, ((TextView) v).getText().toString());
-                        File speechFile = Utils.getSpeechFile(MainActivity.this.getFilesDir(),
-                                srcText, MainActivity.this.srcLang);
-                        if (!speechFile.exists()) {
-                            new TextToSpeechTask(srcText, MainActivity.this.srcLang, speechFile);
-                        }
                     }
                 };
 
@@ -115,6 +121,7 @@ public class MainActivity extends BaseActivity {
                 for (String s : result) {
                     TextView textView = new TextView(MainActivity.this);
                     textView.setText(s);
+                    textView.setTextSize(TypedValue.COMPLEX_UNIT_PT, 16);
                     textView.setOnClickListener(textMarker);
                     MainActivity.this.getTranslationsLayout().addView(textView);
                 }

@@ -2,20 +2,12 @@ package com.peevs.dictpick;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.peevs.dictpick.settings.SettingsActivity;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 
 /**
  * Created by zarrro on 14.10.2015 г..
@@ -62,27 +54,12 @@ public abstract class BaseActivity extends AppCompatActivity {
         targetLang = Language.valueOf(sharedPrefs.getString("key_pref_target_lang", "BG"));
     }
 
-
-    public File getSpeechFile(String text, Language lang) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("tts-");
-        sb.append(text.hashCode());
-        sb.append(lang.toString().hashCode());
-        sb.append(".mp3");
-        return new File(this.getFilesDir(), sb.toString());
-    }
-
     protected void sayQuestion(String srcText) {
-        new TextToSpeechTask(srcText, srcLang, getSpeechFile(srcText, srcLang)).execute();
+        new TextToSpeechTask(srcText, srcLang, getFilesDir()).execute();
     }
 
-    public void sayQuestion(View v) {
-        if (questionWordId != -1 && srcLang != null) {
-            sayQuestion(questionWordId);
-        } else {
-            Log.d(TAG, String.format(
-                    "sayQuestion - question word is not set: questionWordId = %s, srcLang = %s",
-                    questionWordId, srcLang));
-        }
+    protected void sayQuestion(String srcText, Language lang) {
+        new TextToSpeechTask(srcText, lang, getFilesDir()).execute();
     }
+
 }

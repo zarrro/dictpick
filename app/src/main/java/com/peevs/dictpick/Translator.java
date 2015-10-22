@@ -30,7 +30,7 @@ public class Translator {
     public static final String QUERY_STRING_TEMPLATE = "/translate_a/single?"
             + "client=t&sl=%s&tl=%s&dt=%s&ie=%s&oe=%s&q=%s&tk=509474|121316";
     public static final String QUERY_STRING_TTS_TEMPLATE =
-            "/translate_tts?&client=t&tl=%s&ie=UTF-8&q=%s";
+            "/translate_tts?&client=t&tl=%s&ie=UTF-8&tk=699068|821817&q=%s";
     public static final String HTTP_HEADER_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1)"
             + " AppleWebKit/537.36 (HTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
 
@@ -108,7 +108,8 @@ public class Translator {
 
         InputStream in = null;
         try {
-            URL url = new URL(PROTO, HOST, String.format(QUERY_STRING_TTS_TEMPLATE, langStr, text));
+            URL url = new URL(PROTO, HOST, String.format(QUERY_STRING_TTS_TEMPLATE, langStr,
+                    URLEncoder.encode(text, "UTF-8")));
             URLConnection gooCon = url.openConnection();
             gooCon.setRequestProperty("User-Agent", HTTP_HEADER_USER_AGENT);
             gooCon.setRequestProperty("x-client-data", "CKK2yQEIqbbJAQjEtskBCOmIygEI/ZXKAQi8mMoB");

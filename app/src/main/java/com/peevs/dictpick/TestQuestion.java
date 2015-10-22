@@ -98,6 +98,8 @@ public class TestQuestion implements Parcelable {
     private WordEntry question;
     private WordEntry[] options;
     private int correctAnswerIndex;
+    private Language questionLanguage;
+    private Language optionLanguage;
 
     public WordEntry getQuestion() {
         return question;
@@ -125,6 +127,22 @@ public class TestQuestion implements Parcelable {
 
     public void setCorrectAnswerIndex(int correctAnswerIndex) {
         this.correctAnswerIndex = correctAnswerIndex;
+    }
+
+    public Language getQuestionLanguage() {
+        return questionLanguage;
+    }
+
+    public void setQuestionLanguage(Language questionLanguage) {
+        this.questionLanguage = questionLanguage;
+    }
+
+    public Language getOptionLanguage() {
+        return optionLanguage;
+    }
+
+    public void setOptionLanguage(Language optionLanguage) {
+        this.optionLanguage = optionLanguage;
     }
 
     @Override

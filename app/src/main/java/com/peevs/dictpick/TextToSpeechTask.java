@@ -22,12 +22,11 @@ public class TextToSpeechTask extends AsyncTask<Void, Void, Void> {
         DOWNLOAD_AND_PLAY, DOWNLOAD_ONLY, PLAY_ONLY;
     }
 
-
     private static final String TAG = TextToSpeechTask.class.getSimpleName();
 
     private final Language lang;
 
-    private final File speechFile;
+    private final File filesDir;
     private final String text;
 
     private final boolean forceDownload;
@@ -54,10 +53,10 @@ public class TextToSpeechTask extends AsyncTask<Void, Void, Void> {
         }
     }
 
-    public TextToSpeechTask(String text, Language lang, File file) {
+    public TextToSpeechTask(String text, Language lang, File filesDir) {
         this.text = text;
         this.lang = lang;
-        this.speechFile = file;
+        this.filesDir = filesDir;
         // the defaults
         this.forceDownload = false;
         this.mode = Mode.DOWNLOAD_AND_PLAY;
@@ -66,13 +65,14 @@ public class TextToSpeechTask extends AsyncTask<Void, Void, Void> {
     public TextToSpeechTask(String text, Language lang, File file, Mode mode, boolean forceDownload) {
         this.text = text;
         this.lang = lang;
-        this.speechFile = file;
+        this.filesDir = file;
         this.mode = mode;
         this.forceDownload = forceDownload;
     }
 
     @Override
     protected Void doInBackground(Void... v) {
+        File speechFile = getSpeechFile(filesDir, this.text, this.lang);
         if (mode == Mode.DOWNLOAD_ONLY || mode == Mode.DOWNLOAD_AND_PLAY) {
             OutputStream outputStream = null;
             try {
@@ -80,8 +80,8 @@ public class TextToSpeechTask extends AsyncTask<Void, Void, Void> {
                 Log.i(TAG, "Download text to speech speechFile: " + speechFile.getAbsolutePath());
                 Translator.textToSpeach(this.text, lang, outputStream);
             } catch (IOException e) {
-                Log.e(TAG, "Failed to store text to speech speechFile ", e);
-                //TODO: cleanup - delete the tts speechFile here
+                Log.e(TAG, "Failed to store text to speech filesDir ", e);
+                speechFile.delete();
             } finally {
                 try {
                     outputStream.close();
@@ -92,9 +92,8 @@ public class TextToSpeechTask extends AsyncTask<Void, Void, Void> {
         }
         if (mode == Mode.PLAY_ONLY || mode == Mode.DOWNLOAD_AND_PLAY) {
             if (speechFile.exists() && speechFile.isFile()) {
-                FileInputStream fin = null;
                 try {
-                    fin = new FileInputStream(speechFile);
+                    FileInputStream fin = new FileInputStream(speechFile);
                     MediaPlayer mediaPlayer = new MediaPlayer();
                     mediaPlayer.setAudioStreamType(AudioManager.STREAM_RING);
                     mediaPlayer.setDataSource(fin.getFD());
@@ -103,12 +102,21 @@ public class TextToSpeechTask extends AsyncTask<Void, Void, Void> {
                     mediaPlayer.prepare();
                     mediaPlayer.start();
                 } catch (IOException e) {
-                    Log.e(TAG, "Error with playing the speech speechFile, delete it to cleanup", e);
+                    Log.e(TAG, "Error with playing the speech filesDir, delete it to cleanup", e);
                     speechFile.delete();
                 }
             }
         }
         return null;
+    }
+
+    public File getSpeechFile(File filesDir, String text, Language lang) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("tts-");
+        sb.append(text.hashCode());
+        sb.append(lang.toString().hashCode());
+        sb.append(".mp3");
+        return new File(this.filesDir, sb.toString());
     }
 }
 
