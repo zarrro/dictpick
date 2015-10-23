@@ -25,6 +25,7 @@ public class ExamActivity extends BaseActivity {
 
     private static final String TAG = "ExamActivity";
     private Random rand = new Random(System.currentTimeMillis());
+    private TestQuestion currentQuestion = null;
 
     class GenerateTestTask extends AsyncTask<Void, Void, TestQuestion> {
 
@@ -175,6 +176,13 @@ public class ExamActivity extends BaseActivity {
         }
     }
 
+    public void sayCurrentQuestion(View v) {
+        if (currentQuestion != null && srcLang == currentQuestion.getQuestionLanguage()) {
+            //TODO: problem with playing BG, so play only srcLang (EN)
+            sayQuestion(currentQuestion.getQuestion().getText(), currentQuestion.getQuestionLanguage());
+        }
+    }
+
     void updateStats(int questionWordId, int wrongAnswerId) {
         ExamDbFacade.AnswerStatsEntry statsIn = new ExamDbFacade.AnswerStatsEntry();
         statsIn.setQuestionWordId(questionWordId);
@@ -235,13 +243,9 @@ public class ExamActivity extends BaseActivity {
 
         // set the question word
         ((TextView) findViewById(R.id.question_text)).setText(testQuestion.getQuestion().getText());
+        this.currentQuestion = testQuestion;
+        sayCurrentQuestion(null);
 
-        //TODO: problem with playing BG, so play only srcLang (EN)
-        if(srcLang == testQuestion.getQuestionLanguage()) {
-            sayQuestion(testQuestion.getQuestion().getText(), testQuestion.getQuestionLanguage());
-        }
-
-        questionWordId = testQuestion.getQuestion().getId();
 
         LinearLayout answersLayout = (LinearLayout) findViewById(R.id.layout_answers);
 

@@ -20,7 +20,6 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected Language srcLang = null;
     protected Language targetLang = null;
-    protected long questionWordId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

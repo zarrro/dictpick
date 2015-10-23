@@ -34,6 +34,7 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
@@ -158,7 +159,6 @@ public class MainActivity extends BaseActivity {
                 wordId = examDbFacade.saveTranslation(sourceText, targetText,
                         MainActivity.this.srcLang.toString().toLowerCase(),
                         MainActivity.this.targetLang.toString().toLowerCase());
-                MainActivity.this.questionWordId = wordId;
             }catch (ExamDbFacade.AlreadyExistsException e) {
                 errorMessage = e.getMessage();
             }
