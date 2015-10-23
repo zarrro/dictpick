@@ -36,9 +36,7 @@
         android:id="@+id/layout_answers"
         android:layout_toLeftOf="@+id/btn_newtest"
         android:layout_toStartOf="@+id/btn_newtest"
-        android:layout_alignParentEnd="false">
-
-    </LinearLayout>
+        android:layout_alignParentEnd="false" />
 
     <TextView
         android:layout_width="fill_parent"

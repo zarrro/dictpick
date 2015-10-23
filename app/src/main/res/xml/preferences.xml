@@ -22,4 +22,9 @@
         android:key="key_pref_target_lang"
         android:title="@string/pref_target_language" />
 
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="key_pref_auto_say_question"
+        android:title="@string/pref_auto_say_question" />
+
 </PreferenceScreen>

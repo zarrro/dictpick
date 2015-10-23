@@ -19,8 +19,10 @@ public class Settings extends PreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String TAG = Settings.class.getSimpleName();
+
     public static final String PREF_KEY_RECURRING_CHALLENGE_FREQUENCY =
             "key_pref_challenge_notifications";
+    public static final String PREF_KEY_AUTO_SAY_QUESTION = "key_pref_auto_say_question";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,8 +76,7 @@ public class Settings extends PreferenceFragment
         }
         if (p instanceof EditTextPreference) {
             EditTextPreference editTextPref = (EditTextPreference) p;
-            if (p.getTitle().toString().contains("assword"))
-            {
+            if (p.getTitle().toString().contains("assword")) {
                 p.setSummary("******");
             } else {
                 p.setSummary(editTextPref.getText());

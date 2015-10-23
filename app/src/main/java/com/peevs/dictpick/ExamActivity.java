@@ -1,9 +1,11 @@
 package com.peevs.dictpick;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -11,6 +13,8 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.peevs.dictpick.settings.Settings;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -26,6 +30,7 @@ public class ExamActivity extends BaseActivity {
     private static final String TAG = "ExamActivity";
     private Random rand = new Random(System.currentTimeMillis());
     private TestQuestion currentQuestion = null;
+    private boolean autoSayQuestion = true;
 
     class GenerateTestTask extends AsyncTask<Void, Void, TestQuestion> {
 
@@ -179,7 +184,8 @@ public class ExamActivity extends BaseActivity {
     public void sayCurrentQuestion(View v) {
         if (currentQuestion != null && srcLang == currentQuestion.getQuestionLanguage()) {
             //TODO: problem with playing BG, so play only srcLang (EN)
-            sayQuestion(currentQuestion.getQuestion().getText(), currentQuestion.getQuestionLanguage());
+            sayQuestion(currentQuestion.getQuestion().getText(),
+                    currentQuestion.getQuestionLanguage());
         }
     }
 
@@ -196,10 +202,12 @@ public class ExamActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.exam);
 
-        Intent intent = getIntent();
+        initAutoSayQuestion();
 
+        Intent intent = getIntent();
         TestQuestion testQuestion = intent.getParcelableExtra(
                 NotificationPublisher.QUESTION_FROM_NOTIFICATION);
+
         if (testQuestion != null) {
             Log.i(TAG, String.format(
                     "ExamActivity started from notification intent %s, with testQuestion:%n %s",
@@ -209,6 +217,12 @@ public class ExamActivity extends BaseActivity {
             // activity is started from within the DictPick app - start with a new question
             generateTestQuestion(null);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initAutoSayQuestion();
     }
 
     @Override
@@ -232,7 +246,7 @@ public class ExamActivity extends BaseActivity {
         new GenerateTestTask().execute();
     }
 
-    public void displayTestQuestion(TestQuestion testQuestion) {
+    private void displayTestQuestion(TestQuestion testQuestion) {
         Log.d(TAG, "displayTestQuestion invoked, testQuestion = " + testQuestion);
 
         if (testQuestion == null) {
@@ -244,27 +258,30 @@ public class ExamActivity extends BaseActivity {
         // set the question word
         ((TextView) findViewById(R.id.question_text)).setText(testQuestion.getQuestion().getText());
         this.currentQuestion = testQuestion;
-        sayCurrentQuestion(null);
-
+        if (autoSayQuestion) {
+            sayCurrentQuestion(null);
+        }
 
         LinearLayout answersLayout = (LinearLayout) findViewById(R.id.layout_answers);
-
-        // clear the testOptions from previous question
-        answersLayout.removeAllViews();
+        answersLayout.removeAllViews(); // clear the testOptions from previous question
 
         TestOptionViewsFactory tvFactory = new TestOptionViewsFactory();
-
         for (TextView optionView : tvFactory.createAnswerViews(testQuestion)) {
             answersLayout.addView(optionView);
         }
     }
 
-    public void updateAnswerStatsView(long count, float successRate) {
+    private void updateAnswerStatsView(long count, float successRate) {
 
         // set the question word
         ((TextView) findViewById(R.id.ans_count_stat)).setText(
                 String.format("Answers Count: %d", count));
         ((TextView) findViewById(R.id.ans_success_rate_stat)).setText(
                 String.format("Success Rate: %.2f", successRate * 100) + "%");
+    }
+
+    private void initAutoSayQuestion() {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        autoSayQuestion = sharedPrefs.getBoolean(Settings.PREF_KEY_AUTO_SAY_QUESTION, true);
     }
 }

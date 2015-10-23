@@ -39,10 +39,9 @@ public class ChallengeManager {
 
     public void setRecurringChallenge(ChallengeFrequency frequency) {
         Log.i(TAG, "setRecurringChallenge frequency: " + frequency);
+        disableRecurringChallange();
         if (frequency != ChallengeFrequency.NONE) {
             setRecurringChallenge(frequency.value);
-        } else {
-            disableRecurringChallange();
         }
     }
 
