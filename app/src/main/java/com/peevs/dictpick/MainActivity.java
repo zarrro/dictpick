@@ -6,13 +6,13 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,11 +25,13 @@ public class MainActivity extends BaseActivity {
 
     private static final String TAG = "MainActivity";
     private String errorMessage = null;
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setActionBar((Toolbar) findViewById(R.id.toolbar));
     }
 
     @Override
@@ -122,7 +124,7 @@ public class MainActivity extends BaseActivity {
                 for (String s : result) {
                     TextView textView = new TextView(MainActivity.this);
                     textView.setText(s);
-                    textView.setTextSize(TypedValue.COMPLEX_UNIT_PT, 16);
+                    textView.setTextAppearance(MainActivity.this, R.style.TranslationTextStyle);
                     textView.setOnClickListener(textMarker);
                     MainActivity.this.getTranslationsLayout().addView(textView);
                 }

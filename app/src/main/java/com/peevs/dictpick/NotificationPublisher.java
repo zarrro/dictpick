@@ -44,7 +44,7 @@ public class NotificationPublisher extends BroadcastReceiver {
         String notificationContent = q.getQuestion().getText() + " ?";
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context).setSmallIcon(
-                        R.drawable.notification_template_icon_bg)
+                        R.drawable.notify_01)
                         .setContentTitle("DictPick")
                         .setContentText(notificationContent);
 

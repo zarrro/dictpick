@@ -23,7 +23,6 @@
             android:label="DictPick" />
         <activity android:name=".settings.SettingsActivity"
             android:label="Settings" />
-
         <receiver android:name=".NotificationPublisher" />
     </application>
 

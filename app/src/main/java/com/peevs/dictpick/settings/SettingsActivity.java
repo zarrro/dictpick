@@ -1,12 +1,12 @@
 package com.peevs.dictpick.settings;
 
+import android.app.Activity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 
 /**
  * Created by zarrro on 1.10.2015 г..
  */
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends Activity {
 
     private static final String TAG = SettingsActivity.class.getSimpleName();
 

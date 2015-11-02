@@ -7,7 +7,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -143,7 +142,7 @@ public class ExamActivity extends BaseActivity {
         private TextView wordEntryToTextView(TestQuestion.WordEntry entry) {
             TextView result = new TextView(ExamActivity.this);
             result.setText(entry.getText());
-            result.setTextSize(TypedValue.COMPLEX_UNIT_PT, TEST_OPTION_TEXT_SIZE);
+            result.setTextAppearance(ExamActivity.this, R.style.TranslationTextStyle);
             return result;
         }
 
