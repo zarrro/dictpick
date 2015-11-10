@@ -5,9 +5,9 @@
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
     </style>
+
     <style name="TranslationTextStyle" parent="Base.TextAppearance.AppCompat">
         <item name="android:textSize">14pt</item>
     </style>
-
 
 </resources>

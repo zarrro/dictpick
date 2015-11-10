@@ -25,5 +25,5 @@
             android:label="Settings" />
         <receiver android:name=".NotificationPublisher" />
     </application>
-
+    
 </manifest>

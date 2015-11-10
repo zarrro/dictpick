@@ -1,6 +1,11 @@
 package com.peevs.dictpick;
 
+import android.content.ClipData;
+import android.content.ClipDescription;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
@@ -9,6 +14,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,12 +32,18 @@ public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
     private String errorMessage = null;
     private Toolbar toolbar;
+    private ClipboardManager clipboard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setActionBar((Toolbar) findViewById(R.id.toolbar));
+
+        clipboard = (ClipboardManager)
+                getSystemService(Context.CLIPBOARD_SERVICE);
+
+        updatePasteAction();
     }
 
     @Override
@@ -54,7 +66,7 @@ public class MainActivity extends BaseActivity {
 
     public void sayQuestion(View v) {
         String val = getSrcText();
-        if(val != null && !val.isEmpty()) {
+        if (val != null && !val.isEmpty()) {
             sayQuestion(val);
         }
     }
@@ -68,7 +80,43 @@ public class MainActivity extends BaseActivity {
         getTranslationsLayout().removeAllViews();
     }
 
-    LinearLayout getTranslationsLayout() {
+    public void pasteAndTranslate(View v) {
+        // Examines the item on the clipboard. If getText() does not return null, the clip item
+        // contains the text. Assumes that this application can only handle one item at a time.
+        ClipData.Item item = clipboard.getPrimaryClip().getItemAt(0);
+
+        // Gets the clipboard as text.
+        CharSequence pasteData = item.getText();
+
+        // If the string contains data, then the paste operation is done
+        if (pasteData != null) {
+            EditText srcText = (EditText) findViewById(R.id.edit_srcText);
+            srcText.setText(pasteData);
+            translate(null);
+            return;
+
+        // Non text clipboard content is not handled currently
+        } else {
+            Uri pasteUri = item.getUri();
+
+            // If the URI contains something, try to get text from it
+            if (pasteUri != null) {
+
+                // calls a routine to resolve the URI and get data from it. This routine is not
+                // presented here.
+                Log.w(TAG, "Resolving clipboard URIs is not implemented");
+                return;
+            } else {
+
+                // Something is wrong. The MIME type was plain text, but the clipboard does not
+                // contain either text or a Uri. Report an error.
+                Log.e(TAG, "Clipboard contains an invalid data type");
+                return;
+            }
+        }
+    }
+
+    private LinearLayout getTranslationsLayout() {
         return (LinearLayout) this.findViewById(R.id.layout_translation);
     }
 
@@ -77,7 +125,29 @@ public class MainActivity extends BaseActivity {
         return editTextSrc.getText().toString();
     }
 
-    EditText getSrcTextBox() {
+    private void updatePasteAction() {
+        // If the clipboard doesn't contain data, disable the paste menu item.
+        // If it does contain data, decide if you can handle the data.
+
+        ImageButton pasteButton = (ImageButton) findViewById(R.id.btn_paste_clip);
+
+        if (!(clipboard.hasPrimaryClip())) {
+
+            pasteButton.setEnabled(false);
+
+        } else if (!(clipboard.getPrimaryClipDescription().hasMimeType(
+                ClipDescription.MIMETYPE_TEXT_PLAIN))) {
+
+            // This disables the paste menu item, since the clipboard has data but it is not plain text
+            pasteButton.setEnabled(false);
+        } else {
+
+            // This enables the paste menu item, since the clipboard contains plain text.
+            pasteButton.setEnabled(true);
+        }
+    }
+
+    private EditText getSrcTextBox() {
         return (EditText) this.findViewById(R.id.edit_srcText);
     }
 
@@ -125,6 +195,8 @@ public class MainActivity extends BaseActivity {
                     TextView textView = new TextView(MainActivity.this);
                     textView.setText(s);
                     textView.setTextAppearance(MainActivity.this, R.style.TranslationTextStyle);
+                    textView.setElevation(8.0f);
+                    textView.setPaddingRelative(0, 5, 0, 0);
                     textView.setOnClickListener(textMarker);
                     MainActivity.this.getTranslationsLayout().addView(textView);
                 }
@@ -161,7 +233,7 @@ public class MainActivity extends BaseActivity {
                 wordId = examDbFacade.saveTranslation(sourceText, targetText,
                         MainActivity.this.srcLang.toString().toLowerCase(),
                         MainActivity.this.targetLang.toString().toLowerCase());
-            }catch (ExamDbFacade.AlreadyExistsException e) {
+            } catch (ExamDbFacade.AlreadyExistsException e) {
                 errorMessage = e.getMessage();
             }
 
@@ -171,7 +243,7 @@ public class MainActivity extends BaseActivity {
         @Override
         protected void onPostExecute(Long result) {
             if (result == null || result == -1) {
-                if(errorMessage != null) {
+                if (errorMessage != null) {
                     Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                     errorMessage = null;
                 } else {
