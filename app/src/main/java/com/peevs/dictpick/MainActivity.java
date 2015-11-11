@@ -43,7 +43,8 @@ public class MainActivity extends BaseActivity {
         clipboard = (ClipboardManager)
                 getSystemService(Context.CLIPBOARD_SERVICE);
 
-        updatePasteAction();
+        attachEditTextEventListeners();
+        updatePasteActionState();
     }
 
     @Override
@@ -125,7 +126,7 @@ public class MainActivity extends BaseActivity {
         return editTextSrc.getText().toString();
     }
 
-    private void updatePasteAction() {
+    private void updatePasteActionState() {
         // If the clipboard doesn't contain data, disable the paste menu item.
         // If it does contain data, decide if you can handle the data.
 
@@ -151,6 +152,14 @@ public class MainActivity extends BaseActivity {
         return (EditText) this.findViewById(R.id.edit_srcText);
     }
 
+    private void attachEditTextEventListeners() {
+        // on the next text change result will be cleared
+        this.getSrcTextBox().
+                addTextChangedListener(new ClearTranslationsListener());
+
+        // other event listeners could follow
+    }
+
     class TranslateTask extends AsyncTask<String, Void, List<String>> {
 
         private static final String TAG = "GenerateTestTask";
@@ -159,6 +168,7 @@ public class MainActivity extends BaseActivity {
 
         @Override
         protected List<String> doInBackground(String... params) {
+
             if (params == null || params.length != 1 || params[0] == null || params[0].isEmpty()) {
                 Log.e(TAG, "doInBackground invoked with invalid params");
                 return null;
@@ -182,6 +192,7 @@ public class MainActivity extends BaseActivity {
         @Override
         protected void onPostExecute(List<String> result) {
             if (result != null) {
+
                 OnClickListener textMarker = new OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -201,9 +212,6 @@ public class MainActivity extends BaseActivity {
                     MainActivity.this.getTranslationsLayout().addView(textView);
                 }
 
-                // on the next text change result will be cleared
-                MainActivity.this.getSrcTextBox().
-                        addTextChangedListener(new ClearTranslationsListener());
             } else if (errorMessage != null) {
                 Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                 errorMessage = null;
@@ -271,10 +279,9 @@ public class MainActivity extends BaseActivity {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            MainActivity.this.getTranslationsLayout().removeAllViews();
-            // this text watcher removes itself, from the text
-            // box after the existing translations are cleared
-            MainActivity.this.getSrcTextBox().removeTextChangedListener(this);
+            if (MainActivity.this.getTranslationsLayout().getChildCount() > 0) {
+                MainActivity.this.getTranslationsLayout().removeAllViews();
+            }
         }
     }
 
