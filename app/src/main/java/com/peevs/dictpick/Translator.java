@@ -35,7 +35,7 @@ public class Translator {
             + " AppleWebKit/537.36 (HTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
 
     /**
-     * Translates the srcText from srcLang to targetLang using HTTP call to google.bg/translate.
+     * Translates the srcText from foreignLang to nativeLang using HTTP call to google.bg/translate.
      *
      * @param srcText    - text to be translated
      * @param srcLang    - the language of the srcText

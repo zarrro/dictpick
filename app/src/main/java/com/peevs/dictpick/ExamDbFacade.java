@@ -121,7 +121,7 @@ public class ExamDbFacade {
                                 String targetLang) throws AlreadyExistsException {
 
         Log.i(TAG, String.format("saveTranslation - sourceText %s, targetText %s, sourceLang %s," +
-                "targetLang %s", sourceText, targetText, sourceLang, targetLang));
+                "nativeLang %s", sourceText, targetText, sourceLang, targetLang));
 
         SQLiteDatabase examDb = null;
         try {
@@ -196,7 +196,7 @@ public class ExamDbFacade {
 
     private Cursor queryAllTranslations(Language srcLang, Language targetLang,
                                         SQLiteDatabase examDb) {
-        Log.d(TAG, String.format("getAllTranslations - srcLang = %s, targetLang = %s",
+        Log.d(TAG, String.format("getAllTranslations - foreignLang = %s, nativeLang = %s",
                 srcLang.toString(), targetLang.toString()));
 
         Cursor c = null;

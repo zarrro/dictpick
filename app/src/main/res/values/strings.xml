@@ -11,6 +11,7 @@
     <string name="pref_auto_say_question">Auto say question</string>
 
     <string name="btn_hint_test">Take a word test</string>
+    <string name="btn_swap_langs">Swap languages</string>
     <string name="btn_paste_clipboard">Paste clipboard</string>
 
 </resources>

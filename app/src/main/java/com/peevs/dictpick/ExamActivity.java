@@ -43,7 +43,7 @@ public class ExamActivity extends BaseActivity {
         protected TestQuestion doInBackground(Void... n) {
             Log.d(TAG, "doInBackground started...");
             ExamDbFacade examDb = new ExamDbFacade(new ExamDbHelper(ExamActivity.this));
-            return examDb.getRandomTestQuestion(srcLang, targetLang,
+            return examDb.getRandomTestQuestion(foreignLang, nativeLang,
                     TestQuestion.WRONG_OPTIONS_COUNT);
         }
 
@@ -181,8 +181,8 @@ public class ExamActivity extends BaseActivity {
     }
 
     public void sayCurrentQuestion(View v) {
-        if (currentQuestion != null && srcLang == currentQuestion.getQuestionLanguage()) {
-            //TODO: problem with playing BG, so play only srcLang (EN)
+        if (currentQuestion != null && foreignLang == currentQuestion.getQuestionLanguage()) {
+            //TODO: problem with playing BG, so play only foreignLang (EN)
             sayQuestion(currentQuestion.getQuestion().getText(),
                     currentQuestion.getQuestionLanguage());
         }

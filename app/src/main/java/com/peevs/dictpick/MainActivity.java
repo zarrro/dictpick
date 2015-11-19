@@ -5,6 +5,7 @@ import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -34,6 +35,9 @@ public class MainActivity extends BaseActivity {
     private Toolbar toolbar;
     private ClipboardManager clipboard;
 
+    private Language translateSrcLang;
+    private Language translateTargetLang;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +49,7 @@ public class MainActivity extends BaseActivity {
 
         attachEditTextEventListeners();
         updatePasteActionState();
+        updateTranslateLanguages();
     }
 
     @Override
@@ -66,9 +71,12 @@ public class MainActivity extends BaseActivity {
     }
 
     public void sayQuestion(View v) {
-        String val = getSrcText();
-        if (val != null && !val.isEmpty()) {
-            sayQuestion(val);
+        // you can listen only the foreign lang
+        if(translateSrcLang == foreignLang) {
+            String val = getSrcText();
+            if (val != null && !val.isEmpty()) {
+                sayQuestion(val);
+            }
         }
     }
 
@@ -148,6 +156,26 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    private void updateTranslateLanguages() {
+        // by default translation is from the foreign to the native lang
+        translateSrcLang = foreignLang;
+        translateTargetLang = nativeLang;
+        updateViewsOnSwapLanguage();
+    }
+
+    private void updateViewsOnSwapLanguage() {
+        ((TextView) findViewById(R.id.translate_src_lang)).setText(translateSrcLang.toString());
+        ((TextView) findViewById(R.id.translate_target_lang)).setText(translateTargetLang.toString());
+        ((ImageButton) findViewById(R.id.btn_listen_main)).setEnabled(translateSrcLang == foreignLang);
+    }
+
+    public void swapLanguages(View v) {
+        Language tmp = translateSrcLang;
+        translateSrcLang = translateTargetLang;
+        translateTargetLang = tmp;
+        updateViewsOnSwapLanguage();
+    }
+
     private EditText getSrcTextBox() {
         return (EditText) this.findViewById(R.id.edit_srcText);
     }
@@ -180,8 +208,8 @@ public class MainActivity extends BaseActivity {
             List<String> result = null;
             try {
                 result = Translator.translate(params[0],
-                        MainActivity.this.srcLang.toString().toLowerCase(),
-                        MainActivity.this.targetLang.toString().toLowerCase());
+                        MainActivity.this.translateSrcLang.toString().toLowerCase(),
+                        MainActivity.this.translateTargetLang.toString().toLowerCase());
             } catch (IOException e) {
                 errorMessage = "Translation service invocation failed...";
                 Log.e(TAG, errorMessage, e);
@@ -239,8 +267,8 @@ public class MainActivity extends BaseActivity {
             ExamDbFacade examDbFacade = new ExamDbFacade(new ExamDbHelper(MainActivity.this));
             try {
                 wordId = examDbFacade.saveTranslation(sourceText, targetText,
-                        MainActivity.this.srcLang.toString().toLowerCase(),
-                        MainActivity.this.targetLang.toString().toLowerCase());
+                        MainActivity.this.translateSrcLang.toString().toLowerCase(),
+                        MainActivity.this.translateTargetLang.toString().toLowerCase());
             } catch (ExamDbFacade.AlreadyExistsException e) {
                 errorMessage = e.getMessage();
             }

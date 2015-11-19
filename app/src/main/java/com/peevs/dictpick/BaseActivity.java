@@ -18,8 +18,8 @@ public abstract class BaseActivity extends Activity {
 
     private static final String TAG = BaseActivity.class.getSimpleName();
 
-    protected Language srcLang = null;
-    protected Language targetLang = null;
+    protected Language foreignLang = null;
+    protected Language nativeLang = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,14 +47,13 @@ public abstract class BaseActivity extends Activity {
     }
 
     protected void initLanguages() {
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        srcLang = Language.valueOf(sharedPrefs.getString("key_pref_src_lang", "EN"));
-        targetLang = Language.valueOf(sharedPrefs.getString("key_pref_target_lang", "BG"));
+        foreignLang = Language.valueOf(sharedPrefs.getString("key_pref_src_lang", "EN"));
+        nativeLang = Language.valueOf(sharedPrefs.getString("key_pref_target_lang", "BG"));
     }
 
     protected void sayQuestion(String srcText) {
-        new TextToSpeechTask(srcText, srcLang, getFilesDir()).execute();
+        new TextToSpeechTask(srcText, foreignLang, getFilesDir()).execute();
     }
 
     protected void sayQuestion(String srcText, Language lang) {

@@ -24,18 +24,48 @@
             android:elevation="12dp">
 
             <ImageButton
+                android:id="@+id/btn_take_test"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentRight="true"
                 android:layout_gravity="right"
                 android:background="?android:attr/selectableItemBackground"
                 android:contentDescription="@string/btn_hint_test"
                 android:cropToPadding="false"
                 android:onClick="startExamActivity"
-                android:src="@drawable/ic_testaplus" />
+                android:src="@drawable/ic_testaplus"
+                android:paddingRight="5pt" />
+
+            <TextView
+                android:layout_gravity="right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Src lang"
+                android:id="@+id/translate_src_lang"
+                android:textColor="#ffffff"
+                android:paddingRight="10pt" />
+
+            <ImageButton
+                android:layout_gravity="right"
+                android:id="@+id/swap_langs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/selectableItemBackground"
+                android:contentDescription="@string/btn_swap_langs"
+                android:onClick="swapLanguages"
+                android:src="@drawable/ic_swap_langs_1_white" />
+
+            <TextView
+                android:layout_gravity="right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Target lang"
+                android:textColor="#ffffff"
+                android:id="@+id/translate_target_lang" />
 
         </android.widget.Toolbar>
+
 
         <EditText
             android:id="@+id/edit_srcText"
@@ -54,7 +84,17 @@
             android:layout_weight="0.10"
             android:background="@color/background_material_light"
             android:gravity="right"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:weightSum="1">
+
+            <ImageButton
+                android:id="@+id/btn_listen_main"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:onClick="sayQuestion"
+                android:src="@drawable/ic_listen_rounded_black" />
 
             <ImageButton
                 android:id="@+id/btn_paste_clip"
@@ -65,14 +105,10 @@
                 android:onClick="pasteAndTranslate"
                 android:src="@drawable/ic_paste_rounded_black" />
 
-            <ImageButton
-                android:id="@+id/btn_listen_main"
+            <Space
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:onClick="sayQuestion"
-                android:src="@drawable/ic_listen_rounded_black" />
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
 
             <ImageButton
                 android:id="@+id/btn_translate"
