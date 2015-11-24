@@ -5,7 +5,6 @@ import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,19 +13,21 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Toolbar;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static android.view.View.OnClickListener;
-import static com.peevs.dictpick.ExamDbContract.UNIQUE_CONTRAINT_FAILED_ERR_CODE;
-
 
 public class MainActivity extends BaseActivity {
 
@@ -72,7 +73,7 @@ public class MainActivity extends BaseActivity {
 
     public void sayQuestion(View v) {
         // you can listen only the foreign lang
-        if(translateSrcLang == foreignLang) {
+        if (translateSrcLang == foreignLang) {
             String val = getSrcText();
             if (val != null && !val.isEmpty()) {
                 sayQuestion(val);
@@ -104,7 +105,7 @@ public class MainActivity extends BaseActivity {
             translate(null);
             return;
 
-        // Non text clipboard content is not handled currently
+            // Non text clipboard content is not handled currently
         } else {
             Uri pasteUri = item.getUri();
 
@@ -188,14 +189,128 @@ public class MainActivity extends BaseActivity {
         // other event listeners could follow
     }
 
-    class TranslateTask extends AsyncTask<String, Void, List<String>> {
+
+    class TranslationItem {
+
+        private String srcText;
+        private String targetText;
+        private Language srcLang;
+        private Language targetLang;
+        private long dbId = ExamDbFacade.ID_NOT_EXISTS;
+
+        private TextView textView;
+        private ImageButton star;
+
+        TranslationItem(String content) {
+            this.targetText = content;
+        }
+
+        View initView() {
+            ViewGroup viewGroup = new RelativeLayout(MainActivity.this);
+            textView  = createTextView();
+            star = createStar(starEnablerAction);
+
+            RelativeLayout layout = new RelativeLayout(MainActivity.this);
+            layout.addView(textView);
+            layout.addView(star);
+
+            ((RelativeLayout.LayoutParams) textView.getLayoutParams()).addRule(
+                    RelativeLayout.ALIGN_PARENT_LEFT);
+
+            ((RelativeLayout.LayoutParams) star.getLayoutParams()).addRule(
+                    RelativeLayout.ALIGN_PARENT_RIGHT);
+            return viewGroup;
+        }
+
+        void updateView() {
+            if(dbId != ExamDbFacade.ID_NOT_EXISTS) {
+                star.setImageResource(R.drawable.ic_star_basic_enabled);
+                star.setEnabled(false);
+            }
+        }
+
+        private TextView createTextView() {
+            TextView textView = new TextView(MainActivity.this);
+            textView.setText(this.targetText);
+            textView.setTextAppearance(MainActivity.this, R.style.TranslationTextStyle);
+            textView.setPaddingRelative(0, 5, 0, 0);
+            MainActivity.this.getTranslationsLayout().addView(textView);
+            return textView;
+        }
+
+        private ImageButton createStar() {
+            ImageButton star = new ImageButton(MainActivity.this);
+            star = new ImageButton(MainActivity.this);
+            if (this.dbId != ExamDbFacade.ID_NOT_EXISTS) {
+                star.setImageResource(R.drawable.ic_star_basic_enabled);
+                star.setEnabled(false);
+            } else {
+                star.setImageResource(R.drawable.ic_star_basic_disabled);
+                star.setOnClickListener(createSaveTranslationTask());
+            }
+            return star;
+        }
+
+        private OnClickListener createSaveTranslationTask() {
+
+            OnClickListener listener = new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // save the translation clicked to the exam DB
+                    new SaveTranslationItemTask(TranslationItem.this).execute();
+                }
+            };
+
+            return listener;
+        }
+
+        void setDbId(long dbId) {
+            this.dbId = dbId;
+        }
+
+        public long getDbId() {
+            return dbId;
+        }
+
+        public String getTargetText() {
+            return targetText;
+        }
+
+        public String getSrcText() {
+            return srcText;
+        }
+
+        public Language getSrcLang() {
+            return srcLang;
+        }
+
+        public Language getTargetLang() {
+            return targetLang;
+        }
+    }
+
+    class TranslationItemOnClickListener implements OnClickListener{
+
+        private final SaveTranslationItemTask saveTranslationItemTask;
+
+        TranslationItemOnClickListener(SaveTranslationItemTask saveTranslationItemTask){
+            this.saveTranslationItemTask = saveTranslationItemTask;
+        }
+
+        @Override
+        public void onClick(View v) {
+            saveTranslationItemTask.execute();
+        }
+    }
+
+    class TranslateTask extends AsyncTask<String, Void, List<TranslationItem>> {
 
         private static final String TAG = "GenerateTestTask";
         private String srcText = null;
         private String errorMessage = null;
 
         @Override
-        protected List<String> doInBackground(String... params) {
+        protected List<TranslationItem> doInBackground(String... params) {
 
             if (params == null || params.length != 1 || params[0] == null || params[0].isEmpty()) {
                 Log.e(TAG, "doInBackground invoked with invalid params");
@@ -205,39 +320,42 @@ public class MainActivity extends BaseActivity {
             srcText = params[0].trim().toLowerCase();
 
             Log.d(TAG, String.format("doInBackground - srcText = %s", srcText));
-            List<String> result = null;
+            List<String> translations = null;
             try {
-                result = Translator.translate(params[0],
+                translations = Translator.translate(params[0],
                         MainActivity.this.translateSrcLang.toString().toLowerCase(),
                         MainActivity.this.translateTargetLang.toString().toLowerCase());
             } catch (IOException e) {
                 errorMessage = "Translation service invocation failed...";
                 Log.e(TAG, errorMessage, e);
             }
-            return result;
+
+            // check already existing to DB
+            ExamDbFacade examDbFacade = new ExamDbFacade(new ExamDbHelper(MainActivity.this));
+
+            Map<String, Integer> existingInDb =
+                    examDbFacade.filterExisting(srcText, translations, translateSrcLang,
+                            translateTargetLang);
+
+            List<TranslationItem> translationItems = new ArrayList<TranslationItem>(10);
+            TranslationItem item;
+            for(String s : translations) {
+                item = new TranslationItem(s);
+                translationItems.add(item);
+                if(existingInDb.containsKey(s)) {
+                    item.setDbId(existingInDb.get(s));
+                }
+            }
+            return translationItems;
         }
 
         @Override
-        protected void onPostExecute(List<String> result) {
-            if (result != null) {
+        protected void onPostExecute(List<TranslationItem> translationItems) {
+            if (translationItems != null) {
 
-                OnClickListener textMarker = new OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        // save the translation clicked to the exam DB
-                        new SaveWordTask().execute(srcText, ((TextView) v).getText().toString());
-                    }
-                };
 
-                int index = 1000;
-                for (String s : result) {
-                    TextView textView = new TextView(MainActivity.this);
-                    textView.setText(s);
-                    textView.setTextAppearance(MainActivity.this, R.style.TranslationTextStyle);
-                    textView.setElevation(8.0f);
-                    textView.setPaddingRelative(0, 5, 0, 0);
-                    textView.setOnClickListener(textMarker);
-                    MainActivity.this.getTranslationsLayout().addView(textView);
+                for (TranslationItem ti : translationItems) {
+                    MainActivity.this.getTranslationsLayout().addView(ti.initView());
                 }
 
             } else if (errorMessage != null) {
@@ -247,32 +365,29 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    class SaveWordTask extends AsyncTask<String, Void, Long> {
+    class SaveTranslationItemTask extends AsyncTask<Void, Void, Long> {
 
-        private static final String TAG = "SaveWordTask";
+        private static final String TAG = "SaveTranslationItemTask";
+        private final TranslationItem ti;
+
+        SaveTranslationItemTask(TranslationItem ti) {
+            this.ti = ti;
+        }
 
         @Override
-        protected Long doInBackground(String... params) {
-            if (params == null || params.length != 2) {
-                Log.e(TAG, "doInBackground invoked with invalid params, nothing stored...");
-                return -1l;
-            }
-
-            final String sourceText = params[0];
-            final String targetText = params[1];
+        protected Long doInBackground(Void... params) {
 
             long wordId = -1;
 
             // save to DB
             ExamDbFacade examDbFacade = new ExamDbFacade(new ExamDbHelper(MainActivity.this));
             try {
-                wordId = examDbFacade.saveTranslation(sourceText, targetText,
-                        MainActivity.this.translateSrcLang.toString().toLowerCase(),
-                        MainActivity.this.translateTargetLang.toString().toLowerCase());
+                wordId = examDbFacade.saveTranslation(ti.getSrcText(), ti.getTargetText(),
+                        ti.getSrcLang().toString().toLowerCase(),
+                        ti.getTargetLang().toString().toLowerCase());
             } catch (ExamDbFacade.AlreadyExistsException e) {
                 errorMessage = e.getMessage();
             }
-
             return wordId;
         }
 
@@ -285,12 +400,14 @@ public class MainActivity extends BaseActivity {
                 } else {
                     Toast.makeText(MainActivity.this, "Error on saving...", Toast.LENGTH_SHORT).show();
                 }
-            } else if (result.intValue() == UNIQUE_CONTRAINT_FAILED_ERR_CODE) {
+            } else if (result.intValue() == ExamDbFacade.UNIQUE_CONTRAINT_FAILED_ERR_CODE) {
                 Toast.makeText(MainActivity.this, "Translation is already saved.",
                         Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(MainActivity.this, String.format("Saved translation number %s", result),
                         Toast.LENGTH_SHORT).show();
+
+                ti.setDbId(result);
             }
         }
 

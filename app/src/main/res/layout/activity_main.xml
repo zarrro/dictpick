@@ -78,7 +78,7 @@
             android:background="@android:color/transparent"
             android:padding="20dp" />
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.10"
@@ -89,6 +89,7 @@
 
             <ImageButton
                 android:id="@+id/btn_listen_main"
+                android:layout_alignParentLeft="true"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
@@ -98,20 +99,20 @@
 
             <ImageButton
                 android:id="@+id/btn_paste_clip"
+
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
                 android:background="?android:attr/selectableItemBackground"
                 android:onClick="pasteAndTranslate"
-                android:src="@drawable/ic_paste_rounded_black" />
-
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1" />
+                android:src="@drawable/ic_paste_rounded_black"
+                android:layout_centerVertical="true"
+                android:layout_toEndOf="@+id/btn_listen_main" />
 
             <ImageButton
                 android:id="@+id/btn_translate"
+                android:layout_alignParentRight="true"
+
+
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
@@ -120,7 +121,7 @@
                 android:onClick="translate"
                 android:src="@drawable/ic_search_rounded_black" />
 
-        </LinearLayout>
+        </RelativeLayout>
     </LinearLayout>
 
     <LinearLayout

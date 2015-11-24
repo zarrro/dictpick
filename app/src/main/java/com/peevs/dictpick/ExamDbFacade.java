@@ -7,8 +7,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import static com.peevs.dictpick.TestQuestion.WordEntry;
 
@@ -16,6 +22,9 @@ import static com.peevs.dictpick.TestQuestion.WordEntry;
  * Created by zarrro on 13.9.2015 г..
  */
 public class ExamDbFacade {
+
+    public static final int ID_NOT_EXISTS = -1;
+    public static final int UNIQUE_CONTRAINT_FAILED_ERR_CODE = -2067;
 
     public static class AlreadyExistsException extends Exception {
 
@@ -194,6 +203,106 @@ public class ExamDbFacade {
         }
     }
 
+    /**
+     * Filter out the translations which don't exist in the DB, and return list with WordEntries
+     * for the existing ones.
+     *
+     * @param srcText - source text
+     * @param translations - list of the translations of the source text
+     * @param srcLang - the language of the srcText
+     * @param targetLang - the language of the targetLang
+     * @return - List of WordEntry elements, for the translation which exists in the DB.
+     */
+    public Map<String, Integer> filterExisting(String srcText, List<String> translations,
+                                          Language srcLang, Language targetLang) {
+
+        if(srcLang == null) {
+            throw new IllegalArgumentException("srcLang is null");
+        }
+        if(targetLang == null) {
+            throw new IllegalArgumentException("targetLang is null");
+        }
+        if(srcText == null) {
+            throw new IllegalArgumentException("srcText is null");
+        }
+        if(translations == null || translations.isEmpty()) {
+            throw new IllegalArgumentException("translations is null or empty");
+        }
+
+
+        StringBuilder translationsSetBuilder = new StringBuilder(" (");
+        int size = translations.size();
+        int counter = 0;
+        for(String s : translations) {
+            ++counter;
+            translationsSetBuilder.append(" '").append(s).append("'");
+            if(counter < size){
+                translationsSetBuilder.append(",");
+            }
+        }
+        translationsSetBuilder.append(" )");
+        String translationSet = translationsSetBuilder.toString();
+
+        Log.d(TAG, String.format(
+                "invoked filterExisting:  srcText = %s, translations = %s, srcLang = %s, targetLang = %s",
+                srcText, translationSet, srcLang, targetLang));
+
+        SQLiteDatabase examDb = null;
+        Cursor c = null;
+
+        final String AND = " and ";
+        final String EQUALS = " = ";
+
+        try {
+            examDb = sqliteHelper.getReadableDatabase();
+
+            String[] projection = {
+                    ExamDbContract.WordsTable._ID,
+                    ExamDbContract.WordsTable.T_TEXT
+            };
+
+            StringBuilder whereClause = new StringBuilder();
+            whereClause.
+                    append(ExamDbContract.WordsTable.S_LANG).append(EQUALS).
+                    append(srcLang.toString().toLowerCase()).append(AND).
+
+                    append(ExamDbContract.WordsTable.T_LANG).append(EQUALS).
+                    append(targetLang.toString().toLowerCase()).append(AND).
+
+                    append(ExamDbContract.WordsTable.S_TEXT).append(EQUALS).append(srcText).append(AND).
+                    append(ExamDbContract.WordsTable.T_TEXT).append(" in ").append(translationSet);
+
+            c = examDb.query(
+                    ExamDbContract.WordsTable.TABLE_NAME,  // The table to query
+                    projection,             // The columns to return
+                    whereClause.toString(), // The columns for the WHERE clause
+                    null,                   // The values for the WHERE clause
+                    null,                   // don't group the rows
+                    null,                   // don't filter by row groups
+                    null                    // The sort order
+            );
+
+            if(c.getCount() > translations.size()) {
+                throw new IllegalStateException("Filtered set bigger than the source set");
+            }
+
+            Map<String, Integer> result = new HashMap<>();
+            final int ID_COLUMN_INDEX = 1;
+            final int TARGET_TEXT_COLUMN_INDEX = 2;
+            while(c.moveToNext()) {
+                    result.put(c.getString(TARGET_TEXT_COLUMN_INDEX), c.getInt(ID_COLUMN_INDEX));
+            }
+            return result;
+        }finally {
+            if(c != null) {
+                c.close();
+            }
+            if (examDb != null) {
+                examDb.close();
+            }
+        }
+    }
+
     private Cursor queryAllTranslations(Language srcLang, Language targetLang,
                                         SQLiteDatabase examDb) {
         Log.d(TAG, String.format("getAllTranslations - foreignLang = %s, nativeLang = %s",
@@ -280,5 +389,7 @@ public class ExamDbFacade {
         // column 2 - _id
         return new WordEntry(c.getInt(2), c.getString(textColumn));
     }
+
+
 
 }

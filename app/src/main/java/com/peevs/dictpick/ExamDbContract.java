@@ -11,8 +11,6 @@ public final class ExamDbContract {
     public static final String INT_TYPE = " INTEGER";
     public static final String COMMA_SEP = ",";
 
-    public static final int UNIQUE_CONTRAINT_FAILED_ERR_CODE = -2067;
-
     private ExamDbContract() {
     }
 
