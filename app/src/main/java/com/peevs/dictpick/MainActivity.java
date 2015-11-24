@@ -251,7 +251,7 @@ public class MainActivity extends BaseActivity {
             return star;
         }
 
-        private OnClickListener createSaveTranslationTask() {
+        private OnClickListener git () {
 
             OnClickListener listener = new OnClickListener() {
                 @Override
