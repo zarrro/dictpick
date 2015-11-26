@@ -264,13 +264,14 @@ public class ExamDbFacade {
             StringBuilder whereClause = new StringBuilder();
             whereClause.
                     append(ExamDbContract.WordsTable.S_LANG).append(EQUALS).
-                    append(srcLang.toString().toLowerCase()).append(AND).
+                    append("'" + srcLang.toString().toLowerCase() + "'").append(AND).
 
                     append(ExamDbContract.WordsTable.T_LANG).append(EQUALS).
-                    append(targetLang.toString().toLowerCase()).append(AND).
+                    append("'" + targetLang.toString().toLowerCase() + "'").append(AND).
 
-                    append(ExamDbContract.WordsTable.S_TEXT).append(EQUALS).append(srcText).append(AND).
-                    append(ExamDbContract.WordsTable.T_TEXT).append(" in ").append(translationSet);
+                    append(ExamDbContract.WordsTable.S_TEXT).append(EQUALS).
+                    append("'" + srcText + "'").append(AND).append(ExamDbContract.WordsTable.T_TEXT).
+                    append(" in ").append(translationSet);
 
             c = examDb.query(
                     ExamDbContract.WordsTable.TABLE_NAME,  // The table to query
@@ -287,8 +288,8 @@ public class ExamDbFacade {
             }
 
             Map<String, Integer> result = new HashMap<>();
-            final int ID_COLUMN_INDEX = 1;
-            final int TARGET_TEXT_COLUMN_INDEX = 2;
+            final int ID_COLUMN_INDEX = 0;
+            final int TARGET_TEXT_COLUMN_INDEX = 1;
             while(c.moveToNext()) {
                     result.put(c.getString(TARGET_TEXT_COLUMN_INDEX), c.getInt(ID_COLUMN_INDEX));
             }

@@ -5,6 +5,7 @@ import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -66,7 +67,7 @@ public class MainActivity extends BaseActivity {
         if (getTranslationsLayout().getChildCount() == 0) {
             String val = getSrcText();
             if (val != null && !(val = val.trim()).isEmpty()) {
-                new TranslateTask().execute(val);
+                new TranslateTask(this.translateSrcLang, this.translateTargetLang).execute(val);
             }
         }
     }
@@ -192,23 +193,25 @@ public class MainActivity extends BaseActivity {
 
     class TranslationItem {
 
-        private String srcText;
-        private String targetText;
-        private Language srcLang;
-        private Language targetLang;
-        private long dbId = ExamDbFacade.ID_NOT_EXISTS;
+        private final String srcText;
+        private final String targetText;
+        private final Language srcLang;
+        private final Language targetLang;
 
+        private long dbId = ExamDbFacade.ID_NOT_EXISTS;
         private TextView textView;
         private ImageButton star;
 
-        TranslationItem(String content) {
-            this.targetText = content;
+        TranslationItem(String srcText, String targetText, Language srcLang, Language targetLang) {
+            this.srcText = srcText;
+            this.targetText = targetText;
+            this.srcLang = srcLang;
+            this.targetLang = targetLang;
         }
 
         View initView() {
-            ViewGroup viewGroup = new RelativeLayout(MainActivity.this);
-            textView  = createTextView();
-            star = createStar(starEnablerAction);
+            initTextView();
+            initStar();
 
             RelativeLayout layout = new RelativeLayout(MainActivity.this);
             layout.addView(textView);
@@ -216,84 +219,86 @@ public class MainActivity extends BaseActivity {
 
             ((RelativeLayout.LayoutParams) textView.getLayoutParams()).addRule(
                     RelativeLayout.ALIGN_PARENT_LEFT);
-
             ((RelativeLayout.LayoutParams) star.getLayoutParams()).addRule(
                     RelativeLayout.ALIGN_PARENT_RIGHT);
-            return viewGroup;
+            return layout;
         }
 
+        /**
+         * Update existing translations view.
+         * - to be invoked on the UI thread only
+         * - to be invoked only after initView()
+         */
         void updateView() {
-            if(dbId != ExamDbFacade.ID_NOT_EXISTS) {
-                star.setImageResource(R.drawable.ic_star_basic_enabled);
+            if(star == null)
+                throw new IllegalStateException("star is not set. Invoke initView.");
+            updateStarView();
+            // other view updates to be added here when needed
+        }
+
+        private void initStar() {
+            star = new ImageButton(MainActivity.this);
+            star.setBackgroundColor(Color.TRANSPARENT);
+            updateStarView();
+        }
+
+        private void updateStarView() {
+            if (this.dbId != ExamDbFacade.ID_NOT_EXISTS) {
+                star.setImageResource(R.drawable.ic_star_enabled);
                 star.setEnabled(false);
+            } else {
+                star.setImageResource(R.drawable.ic_star_disabled);
+                star.setOnClickListener(createSaveTranslationTask());
             }
         }
 
-        private TextView createTextView() {
-            TextView textView = new TextView(MainActivity.this);
+        private void initTextView() {
+            textView = new TextView(MainActivity.this);
             textView.setText(this.targetText);
             textView.setTextAppearance(MainActivity.this, R.style.TranslationTextStyle);
             textView.setPaddingRelative(0, 5, 0, 0);
-            MainActivity.this.getTranslationsLayout().addView(textView);
-            return textView;
         }
 
-        private ImageButton createStar() {
-            ImageButton star = new ImageButton(MainActivity.this);
-            star = new ImageButton(MainActivity.this);
-            if (this.dbId != ExamDbFacade.ID_NOT_EXISTS) {
-                star.setImageResource(R.drawable.ic_star_basic_enabled);
-                star.setEnabled(false);
-            } else {
-                star.setImageResource(R.drawable.ic_star_basic_disabled);
-                star.setOnClickListener(createSaveTranslationTask());
-            }
-            return star;
-        }
-
-        private OnClickListener git () {
-
-            OnClickListener listener = new OnClickListener() {
+        private OnClickListener createSaveTranslationTask() {
+            return new OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // save the translation clicked to the exam DB
                     new SaveTranslationItemTask(TranslationItem.this).execute();
                 }
             };
-
-            return listener;
         }
 
         void setDbId(long dbId) {
             this.dbId = dbId;
         }
 
-        public long getDbId() {
+        long getDbId() {
             return dbId;
         }
 
-        public String getTargetText() {
+        String getTargetText() {
             return targetText;
         }
 
-        public String getSrcText() {
+        String getSrcText() {
             return srcText;
         }
 
-        public Language getSrcLang() {
+        Language getSrcLang() {
             return srcLang;
         }
 
-        public Language getTargetLang() {
+        Language getTargetLang() {
             return targetLang;
         }
     }
 
-    class TranslationItemOnClickListener implements OnClickListener{
+    class TranslationItemOnClickListener implements OnClickListener {
 
         private final SaveTranslationItemTask saveTranslationItemTask;
 
-        TranslationItemOnClickListener(SaveTranslationItemTask saveTranslationItemTask){
+        TranslationItemOnClickListener(SaveTranslationItemTask saveTranslationItemTask) {
             this.saveTranslationItemTask = saveTranslationItemTask;
         }
 
@@ -306,25 +311,30 @@ public class MainActivity extends BaseActivity {
     class TranslateTask extends AsyncTask<String, Void, List<TranslationItem>> {
 
         private static final String TAG = "GenerateTestTask";
+        private final Language srcLang;
+        private final Language targetLang;
         private String srcText = null;
         private String errorMessage = null;
+
+        TranslateTask(Language srcLang, Language targetLang) {
+            this.srcLang = srcLang;
+            this.targetLang = targetLang;
+        }
 
         @Override
         protected List<TranslationItem> doInBackground(String... params) {
 
+            Log.d(TAG, String.format("doInBackground - srcText = %s", srcText));
             if (params == null || params.length != 1 || params[0] == null || params[0].isEmpty()) {
                 Log.e(TAG, "doInBackground invoked with invalid params");
                 return null;
             }
 
             srcText = params[0].trim().toLowerCase();
-
-            Log.d(TAG, String.format("doInBackground - srcText = %s", srcText));
             List<String> translations = null;
             try {
-                translations = Translator.translate(params[0],
-                        MainActivity.this.translateSrcLang.toString().toLowerCase(),
-                        MainActivity.this.translateTargetLang.toString().toLowerCase());
+                translations = Translator.translate(srcText, srcLang.toString().toLowerCase(),
+                        targetLang.toString().toLowerCase());
             } catch (IOException e) {
                 errorMessage = "Translation service invocation failed...";
                 Log.e(TAG, errorMessage, e);
@@ -339,10 +349,11 @@ public class MainActivity extends BaseActivity {
 
             List<TranslationItem> translationItems = new ArrayList<TranslationItem>(10);
             TranslationItem item;
-            for(String s : translations) {
-                item = new TranslationItem(s);
+            for (String s : translations) {
+                item = new TranslationItem(this.srcText, s, this.srcLang, this.targetLang);
+
                 translationItems.add(item);
-                if(existingInDb.containsKey(s)) {
+                if (existingInDb.containsKey(s)) {
                     item.setDbId(existingInDb.get(s));
                 }
             }
@@ -352,12 +363,10 @@ public class MainActivity extends BaseActivity {
         @Override
         protected void onPostExecute(List<TranslationItem> translationItems) {
             if (translationItems != null) {
-
-
+                ViewGroup translationLayout = MainActivity.this.getTranslationsLayout();
                 for (TranslationItem ti : translationItems) {
-                    MainActivity.this.getTranslationsLayout().addView(ti.initView());
+                    translationLayout.addView(ti.initView());
                 }
-
             } else if (errorMessage != null) {
                 Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
                 errorMessage = null;
@@ -376,8 +385,7 @@ public class MainActivity extends BaseActivity {
 
         @Override
         protected Long doInBackground(Void... params) {
-
-            long wordId = -1;
+            long wordId = ExamDbFacade.ID_NOT_EXISTS;
 
             // save to DB
             ExamDbFacade examDbFacade = new ExamDbFacade(new ExamDbHelper(MainActivity.this));
@@ -408,6 +416,7 @@ public class MainActivity extends BaseActivity {
                         Toast.LENGTH_SHORT).show();
 
                 ti.setDbId(result);
+                ti.updateView();
             }
         }
 

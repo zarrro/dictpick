@@ -33,17 +33,17 @@
                 android:cropToPadding="false"
                 android:onClick="startExamActivity"
                 android:src="@drawable/ic_testaplus"
-                android:paddingRight="5pt" />
+                 />
 
             <TextView
                 android:layout_gravity="right"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Src lang"
-                android:id="@+id/translate_src_lang"
+                android:text="Target lang"
                 android:textColor="#ffffff"
-                android:paddingRight="10pt" />
+                android:paddingRight="10pt"
+                android:id="@+id/translate_target_lang" />
 
             <ImageButton
                 android:layout_gravity="right"
@@ -60,9 +60,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Target lang"
+                android:text="Src lang"
+                android:id="@+id/translate_src_lang"
                 android:textColor="#ffffff"
-                android:id="@+id/translate_target_lang" />
+                />
 
         </android.widget.Toolbar>
 
