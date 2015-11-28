@@ -12,6 +12,8 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.peevs.dictpick.model.TestQuestion;
+
 public class NotificationPublisher extends BroadcastReceiver {
 
     private static final String TAG = BroadcastReceiver.class.getSimpleName();
@@ -41,7 +43,7 @@ public class NotificationPublisher extends BroadcastReceiver {
     }
 
     private Notification getNotification(Context context, TestQuestion q) {
-        String notificationContent = q.getQuestion().getText().getVal() + " ?";
+        String notificationContent = q.getQuestion().getVal() + " ?";
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context).setSmallIcon(
                         R.drawable.notify_01)

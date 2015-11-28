@@ -5,4 +5,8 @@ package com.peevs.dictpick;
  */
 public enum Language {
     EN, BG, DE;
+
+    public static Language val(String s) {
+        return Language.valueOf(s.trim().toUpperCase());
+    }
 }

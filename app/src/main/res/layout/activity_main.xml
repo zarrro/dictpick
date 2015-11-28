@@ -40,7 +40,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:value="Target lang"
+                android:text="Target lang"
                 android:textColor="#ffffff"
                 android:paddingRight="10pt"
                 android:id="@+id/translate_target_lang" />
@@ -60,7 +60,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:value="Src lang"
+                android:text="Src lang"
                 android:id="@+id/translate_src_lang"
                 android:textColor="#ffffff"
                 />
@@ -111,8 +111,6 @@
             <ImageButton
                 android:id="@+id/btn_translate"
                 android:layout_alignParentRight="true"
-
-
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"

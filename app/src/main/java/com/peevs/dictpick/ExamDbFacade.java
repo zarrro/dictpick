@@ -7,8 +7,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.peevs.dictpick.model.TestQuestion;
 import com.peevs.dictpick.model.Text;
 import com.peevs.dictpick.model.TextEntry;
+import com.peevs.dictpick.model.TranslationEntry;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -114,7 +116,7 @@ public class ExamDbFacade {
         try {
             examDb = sqliteHelper.getReadableDatabase();
             c = queryAllTranslations(srcLang, targetLang, examDb);
-            if(c.getCount() <= 0) {
+            if (c.getCount() <= 0) {
                 return null;
             }
             return getRandomTestQuestion(srcLang, targetLang, wrongOptionsCount, c);
@@ -205,25 +207,25 @@ public class ExamDbFacade {
      * Filter out the translations which don't exist in the DB, and return list with WordEntries
      * for the existing ones.
      *
-     * @param srcText - source text
+     * @param srcText      - source text
      * @param translations - list of the translations of the source text
-     * @param srcLang - the language of the srcText
-     * @param targetLang - the language of the targetLang
+     * @param srcLang      - the language of the srcText
+     * @param targetLang   - the language of the targetLang
      * @return - List of TranslationEntry elements, for the translation which exists in the DB.
      */
     public Map<String, Integer> filterExisting(String srcText, List<String> translations,
-                                          Language srcLang, Language targetLang) {
+                                               Language srcLang, Language targetLang) {
 
-        if(srcLang == null) {
+        if (srcLang == null) {
             throw new IllegalArgumentException("srcLang is null");
         }
-        if(targetLang == null) {
+        if (targetLang == null) {
             throw new IllegalArgumentException("targetLang is null");
         }
-        if(srcText == null) {
+        if (srcText == null) {
             throw new IllegalArgumentException("srcText is null");
         }
-        if(translations == null || translations.isEmpty()) {
+        if (translations == null || translations.isEmpty()) {
             throw new IllegalArgumentException("translations is null or empty");
         }
 
@@ -231,10 +233,10 @@ public class ExamDbFacade {
         StringBuilder translationsSetBuilder = new StringBuilder(" (");
         int size = translations.size();
         int counter = 0;
-        for(String s : translations) {
+        for (String s : translations) {
             ++counter;
             translationsSetBuilder.append(" '").append(s).append("'");
-            if(counter < size){
+            if (counter < size) {
                 translationsSetBuilder.append(",");
             }
         }
@@ -281,19 +283,19 @@ public class ExamDbFacade {
                     null                    // The sort order
             );
 
-            if(c.getCount() > translations.size()) {
+            if (c.getCount() > translations.size()) {
                 throw new IllegalStateException("Filtered set bigger than the source set");
             }
 
             Map<String, Integer> result = new HashMap<>();
             final int ID_COLUMN_INDEX = 0;
             final int TARGET_TEXT_COLUMN_INDEX = 1;
-            while(c.moveToNext()) {
-                    result.put(c.getString(TARGET_TEXT_COLUMN_INDEX), c.getInt(ID_COLUMN_INDEX));
+            while (c.moveToNext()) {
+                result.put(c.getString(TARGET_TEXT_COLUMN_INDEX), c.getInt(ID_COLUMN_INDEX));
             }
             return result;
-        }finally {
-            if(c != null) {
+        } finally {
+            if (c != null) {
                 c.close();
             }
             if (examDb != null) {
@@ -314,7 +316,9 @@ public class ExamDbFacade {
             String[] projection = {
                     ExamDbContract.WordsTable.S_TEXT,
                     ExamDbContract.WordsTable.T_TEXT,
-                    ExamDbContract.WordsTable._ID
+                    ExamDbContract.WordsTable._ID,
+                    ExamDbContract.WordsTable.S_LANG,
+                    ExamDbContract.WordsTable.T_LANG
             };
 
             String whereClause = String.format("%s = '%s' and %s = '%s'",
@@ -359,31 +363,39 @@ public class ExamDbFacade {
 
         // 0 - is the source lang column, 1 - is the target lang
         // randomly select whether the question is from source to target lang or vise versa
-        int questionColumn = rand.nextInt(2);
-        int answersColumn = 1 - questionColumn;
 
-        TestQuestion result = new TestQuestion();
+        boolean inverse = rand.nextInt(2) == 1;
+        int answersColumn = inverse ? 0 : 1;
+        final int stCol = 0;
+        final int ttCol = 1;
+        final int idCol = 2;
+        final int slCol = 3;
+        final int tlCol = 4;
 
-        if(questionColumn == 0) {
-            result.setQuestionLanguage(srcLang);
-            result.setOptionLanguage(targetLang);
-        } else {
-            result.setQuestionLanguage(targetLang);
-            result.setOptionLanguage(srcLang);
-        }
+        TestQuestion testQuestion = new TestQuestion(teFromCursor(c, questionIndex, stCol, ttCol,
+                slCol, tlCol, idCol));
+        testQuestion.setInverse(inverse);
 
-        result.setQuestion(createOptionTextEntry(c, questionIndex, questionColumn,
-                result.getQuestionLanguage()));
-        result.setCorrectOptionIndex(correctAnswer);
+        Language optionLanguge = !inverse ? targetLang : srcLang;
+
+        testQuestion.setCorrectOptionIndex(correctAnswer);
         // all the translations follow
         TextEntry[] answers = new TextEntry[wordIndexes.length];
         for (int i = 0; i < answers.length; i++) {
             answers[i] = createOptionTextEntry(c, wordIndexes[i], answersColumn,
-                    result.getOptionLanguage());
+                    optionLanguge);
         }
-        result.setOptions(answers);
-        Log.i(TAG, "getRandomTestQuestion - " + result.toString());
-        return result;
+        testQuestion.setOptions(answers);
+        Log.i(TAG, "getRandomTestQuestion - " + testQuestion.toString());
+        return testQuestion;
+    }
+
+    private TranslationEntry teFromCursor(Cursor c, int row, int srcTextCol, int targetTextCol,
+                                          int srcLangCol, int targetLangCol, int idCol) {
+        c.moveToPosition(row);
+        Text st = new Text(c.getString(srcTextCol), Language.val(c.getString(srcLangCol)));
+        Text tt = new Text(c.getString(targetTextCol), Language.val(c.getString(targetLangCol)));
+        return new TranslationEntry(c.getLong(idCol), st, tt);
     }
 
     private TextEntry createOptionTextEntry(Cursor c, int row, int textColumn, Language lang) {

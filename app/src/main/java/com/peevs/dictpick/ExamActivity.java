@@ -13,8 +13,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.peevs.dictpick.model.TestQuestion;
 import com.peevs.dictpick.model.TextEntry;
-import com.peevs.dictpick.model.TranslationEntry;
 import com.peevs.dictpick.settings.Settings;
 
 import java.util.Arrays;
@@ -183,10 +183,10 @@ public class ExamActivity extends BaseActivity {
     }
 
     public void sayCurrentQuestion(View v) {
-        if (currentQuestion != null && foreignLang == currentQuestion.getQuestionLanguage()) {
+        if (currentQuestion != null && foreignLang == currentQuestion.getQuestion().getLang()) {
             //TODO: problem with playing BG, so play only foreignLang (EN)
-            sayQuestion(currentQuestion.getQuestion().getText().getVal(),
-                    currentQuestion.getQuestionLanguage());
+            sayQuestion(currentQuestion.getQuestion().getVal(),
+                    currentQuestion.getQuestion().getLang());
         }
     }
 
@@ -258,7 +258,7 @@ public class ExamActivity extends BaseActivity {
 
         // set the question word
         ((TextView) findViewById(R.id.question_text)).setText(
-                testQuestion.getQuestion().getText().getVal());
+                testQuestion.getQuestion().getVal());
 
         this.currentQuestion = testQuestion;
         if (autoSayQuestion) {
