@@ -23,6 +23,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Toolbar;
 
+import com.peevs.dictpick.model.Text;
+import com.peevs.dictpick.model.TranslationEntry;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +95,7 @@ public class MainActivity extends BaseActivity {
     }
 
     public void pasteAndTranslate(View v) {
-        // Examines the item on the clipboard. If getText() does not return null, the clip item
+        // Examines the item on the clipboard. If getVal() does not return null, the clip item
         // contains the text. Assumes that this application can only handle one item at a time.
         ClipData.Item item = clipboard.getPrimaryClip().getItemAt(0);
 
@@ -191,25 +194,18 @@ public class MainActivity extends BaseActivity {
     }
 
 
-    class TranslationItem {
+    class TranslationItemView {
 
-        private final String srcText;
-        private final String targetText;
-        private final Language srcLang;
-        private final Language targetLang;
+        private final TranslationEntry we;
 
-        private long dbId = ExamDbFacade.ID_NOT_EXISTS;
         private TextView textView;
         private ImageButton star;
 
-        TranslationItem(String srcText, String targetText, Language srcLang, Language targetLang) {
-            this.srcText = srcText;
-            this.targetText = targetText;
-            this.srcLang = srcLang;
-            this.targetLang = targetLang;
+        TranslationItemView(TranslationEntry we) {
+            this.we = we;
         }
 
-        View initView() {
+        View init() {
             initTextView();
             initStar();
 
@@ -227,11 +223,11 @@ public class MainActivity extends BaseActivity {
         /**
          * Update existing translations view.
          * - to be invoked on the UI thread only
-         * - to be invoked only after initView()
+         * - to be invoked only after init()
          */
-        void updateView() {
-            if(star == null)
-                throw new IllegalStateException("star is not set. Invoke initView.");
+        void update() {
+            if (star == null)
+                throw new IllegalStateException("star is not set. Invoke init.");
             updateStarView();
             // other view updates to be added here when needed
         }
@@ -243,54 +239,24 @@ public class MainActivity extends BaseActivity {
         }
 
         private void updateStarView() {
-            if (this.dbId != ExamDbFacade.ID_NOT_EXISTS) {
+            if (this.we.getId() != ExamDbFacade.ID_NOT_EXISTS) {
                 star.setImageResource(R.drawable.ic_star_enabled);
                 star.setEnabled(false);
             } else {
                 star.setImageResource(R.drawable.ic_star_disabled);
-                star.setOnClickListener(createSaveTranslationTask());
+                star.setOnClickListener(new SaveTranslationItemTask(this));
             }
         }
 
         private void initTextView() {
             textView = new TextView(MainActivity.this);
-            textView.setText(this.targetText);
+            textView.setText(this.we.getTargetText().getVal());
             textView.setTextAppearance(MainActivity.this, R.style.TranslationTextStyle);
             textView.setPaddingRelative(0, 5, 0, 0);
         }
 
-        private OnClickListener createSaveTranslationTask() {
-            return new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // save the translation clicked to the exam DB
-                    new SaveTranslationItemTask(TranslationItem.this).execute();
-                }
-            };
-        }
-
-        void setDbId(long dbId) {
-            this.dbId = dbId;
-        }
-
-        long getDbId() {
-            return dbId;
-        }
-
-        String getTargetText() {
-            return targetText;
-        }
-
-        String getSrcText() {
-            return srcText;
-        }
-
-        Language getSrcLang() {
-            return srcLang;
-        }
-
-        Language getTargetLang() {
-            return targetLang;
+        public TranslationEntry getWe() {
+            return we;
         }
     }
 
@@ -308,7 +274,7 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    class TranslateTask extends AsyncTask<String, Void, List<TranslationItem>> {
+    class TranslateTask extends AsyncTask<String, Void, List<TranslationEntry>> {
 
         private static final String TAG = "GenerateTestTask";
         private final Language srcLang;
@@ -322,7 +288,7 @@ public class MainActivity extends BaseActivity {
         }
 
         @Override
-        protected List<TranslationItem> doInBackground(String... params) {
+        protected List<TranslationEntry> doInBackground(String... params) {
 
             Log.d(TAG, String.format("doInBackground - srcText = %s", srcText));
             if (params == null || params.length != 1 || params[0] == null || params[0].isEmpty()) {
@@ -347,25 +313,30 @@ public class MainActivity extends BaseActivity {
                     examDbFacade.filterExisting(srcText, translations, translateSrcLang,
                             translateTargetLang);
 
-            List<TranslationItem> translationItems = new ArrayList<TranslationItem>(10);
-            TranslationItem item;
+            List<TranslationEntry> translationItems = new ArrayList<>(10);
+            TranslationEntry item;
+            int id;
             for (String s : translations) {
-                item = new TranslationItem(this.srcText, s, this.srcLang, this.targetLang);
-
-                translationItems.add(item);
                 if (existingInDb.containsKey(s)) {
-                    item.setDbId(existingInDb.get(s));
+                    id = existingInDb.get(s);
+                } else {
+                    id = ExamDbFacade.ID_NOT_EXISTS;
                 }
+                item = new TranslationEntry(id,
+                        new Text(this.srcText, this.srcLang),
+                        new Text(s, this.targetLang));
+                translationItems.add(item);
+
             }
             return translationItems;
         }
 
         @Override
-        protected void onPostExecute(List<TranslationItem> translationItems) {
-            if (translationItems != null) {
+        protected void onPostExecute(List<TranslationEntry> wordEntries) {
+            if (wordEntries != null) {
                 ViewGroup translationLayout = MainActivity.this.getTranslationsLayout();
-                for (TranslationItem ti : translationItems) {
-                    translationLayout.addView(ti.initView());
+                for (TranslationEntry we : wordEntries) {
+                    translationLayout.addView(new TranslationItemView(we).init());
                 }
             } else if (errorMessage != null) {
                 Toast.makeText(MainActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
@@ -374,12 +345,14 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    class SaveTranslationItemTask extends AsyncTask<Void, Void, Long> {
+    class SaveTranslationItemTask extends AsyncTask<Void, Void, Long> implements OnClickListener {
 
         private static final String TAG = "SaveTranslationItemTask";
-        private final TranslationItem ti;
+        private final TranslationItemView ti;
 
-        SaveTranslationItemTask(TranslationItem ti) {
+        SaveTranslationItemTask(TranslationItemView ti) {
+            if (ti == null || ti.getWe() == null)
+                throw new IllegalArgumentException("TranslationItemView");
             this.ti = ti;
         }
 
@@ -390,9 +363,12 @@ public class MainActivity extends BaseActivity {
             // save to DB
             ExamDbFacade examDbFacade = new ExamDbFacade(new ExamDbHelper(MainActivity.this));
             try {
-                wordId = examDbFacade.saveTranslation(ti.getSrcText(), ti.getTargetText(),
-                        ti.getSrcLang().toString().toLowerCase(),
-                        ti.getTargetLang().toString().toLowerCase());
+                wordId = examDbFacade.saveTranslation(
+                        ti.getWe().getSrcText().getVal(),
+                        ti.getWe().getTargetText().getVal(),
+                        ti.getWe().getSrcText().getLang().toString().toLowerCase(),
+                        ti.getWe().getTargetText().getLang().toString().toLowerCase());
+                ti.getWe().setId(wordId);
             } catch (ExamDbFacade.AlreadyExistsException e) {
                 errorMessage = e.getMessage();
             }
@@ -414,12 +390,14 @@ public class MainActivity extends BaseActivity {
             } else {
                 Toast.makeText(MainActivity.this, String.format("Saved translation number %s", result),
                         Toast.LENGTH_SHORT).show();
-
-                ti.setDbId(result);
-                ti.updateView();
+                ti.update();
             }
         }
 
+        @Override
+        public void onClick(View v) {
+            execute();
+        }
     }
 
     class ClearTranslationsListener implements TextWatcher {

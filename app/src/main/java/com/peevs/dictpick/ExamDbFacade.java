@@ -7,16 +7,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import java.util.ArrayList;
+import com.peevs.dictpick.model.Text;
+import com.peevs.dictpick.model.TextEntry;
+
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-
-import static com.peevs.dictpick.TestQuestion.WordEntry;
 
 /**
  * Created by zarrro on 13.9.2015 г..
@@ -211,7 +209,7 @@ public class ExamDbFacade {
      * @param translations - list of the translations of the source text
      * @param srcLang - the language of the srcText
      * @param targetLang - the language of the targetLang
-     * @return - List of WordEntry elements, for the translation which exists in the DB.
+     * @return - List of TranslationEntry elements, for the translation which exists in the DB.
      */
     public Map<String, Integer> filterExisting(String srcText, List<String> translations,
                                           Language srcLang, Language targetLang) {
@@ -347,7 +345,8 @@ public class ExamDbFacade {
         return c;
     }
 
-    private TestQuestion getRandomTestQuestion(Language srcLang, Language targetLang, int wrongOptionsCount, Cursor c) {
+    private TestQuestion getRandomTestQuestion(Language srcLang, Language targetLang,
+                                               int wrongOptionsCount, Cursor c) {
         int[] wordIndexes =
                 Utils.generateUniqueRandomNumbers(wrongOptionsCount + 1, c.getCount(), rand);
 
@@ -373,24 +372,24 @@ public class ExamDbFacade {
             result.setOptionLanguage(srcLang);
         }
 
-        result.setQuestion(wordEntryFromCursor(questionIndex, questionColumn, c));
-        result.setCorrectAnswerIndex(correctAnswer);
+        result.setQuestion(createOptionTextEntry(c, questionIndex, questionColumn,
+                result.getQuestionLanguage()));
+        result.setCorrectOptionIndex(correctAnswer);
         // all the translations follow
-        WordEntry[] answers = new WordEntry[wordIndexes.length];
+        TextEntry[] answers = new TextEntry[wordIndexes.length];
         for (int i = 0; i < answers.length; i++) {
-            answers[i] = wordEntryFromCursor(wordIndexes[i], answersColumn, c);
+            answers[i] = createOptionTextEntry(c, wordIndexes[i], answersColumn,
+                    result.getOptionLanguage());
         }
         result.setOptions(answers);
         Log.i(TAG, "getRandomTestQuestion - " + result.toString());
         return result;
     }
 
-    private WordEntry wordEntryFromCursor(int row, int textColumn, Cursor c) {
+    private TextEntry createOptionTextEntry(Cursor c, int row, int textColumn, Language lang) {
         c.moveToPosition(row);
         // column 2 - _id
-        return new WordEntry(c.getInt(2), c.getString(textColumn));
+        return new TextEntry(new Text(c.getString(textColumn), lang), c.getInt(2));
     }
-
-
 
 }

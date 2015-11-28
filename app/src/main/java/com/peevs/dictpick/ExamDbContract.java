@@ -20,6 +20,8 @@ public final class ExamDbContract {
         public static final String T_TEXT = "t_text";
         public static final String S_LANG = "s_lang";
         public static final String T_LANG = "t_lang";
+        public static final String RATING = "rating";
+        public static final String TESTORDER = "tesorder";
 
         public static final String SQL_CREATE =
                 "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
@@ -28,6 +30,8 @@ public final class ExamDbContract {
                         T_TEXT + TEXT_TYPE + COMMA_SEP +
                         S_LANG + TEXT_TYPE + COMMA_SEP +
                         T_LANG + TEXT_TYPE + COMMA_SEP +
+                        RATING + INT_TYPE + COMMA_SEP +
+                        TESTORDER + INT_TYPE + COMMA_SEP +
                         " UNIQUE ( " + S_TEXT + COMMA_SEP + T_TEXT + " ))";
 
 

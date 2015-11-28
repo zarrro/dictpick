@@ -3,6 +3,9 @@ package com.peevs.dictpick;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.peevs.dictpick.model.Text;
+import com.peevs.dictpick.model.TextEntry;
+
 import java.util.Arrays;
 
 /**
@@ -20,10 +23,10 @@ public class TestQuestion implements Parcelable {
         // index 1 - index of the correct answer
         // index 2..end - the word entries of the answer options
         String[] testQuestionString = new String[options.length + 2];
-        testQuestionString[0] = wordEntryAsString(question);
-        testQuestionString[1] = String.valueOf(correctAnswerIndex);
+        testQuestionString[0] = getTextEntryAsString(question);
+        testQuestionString[1] = String.valueOf(correctOptionIndex);
         for (int i = 2; i < testQuestionString.length; i++) {
-            testQuestionString[i] = wordEntryAsString(options[i - 2]);
+            testQuestionString[i] = getTextEntryAsString(options[i - 2]);
         }
         out.writeStringArray(testQuestionString);
     }
@@ -40,24 +43,24 @@ public class TestQuestion implements Parcelable {
         }
     };
 
-    private String wordEntryAsString(WordEntry e) {
-        return e.getId() + "=" + e.getText();
+    private String getTextEntryAsString(TextEntry e) {
+        return e.getId() + "::" + e.getText().getVal() + "::" + e.getText().getLang();
     }
 
-    private WordEntry wordEntryFromString(String s) {
-        String[] parts = s.split("=");
-        return new WordEntry(Integer.valueOf(parts[0]), parts[1]);
+    private TextEntry getTextEntryFromString(String s) {
+        String[] parts = s.split("::");
+        return new TextEntry(new Text(parts[1], Language.valueOf(parts[2])), Long.valueOf(parts[0]));
     }
 
     private TestQuestion(Parcel in) {
         String[] data = new String[WRONG_OPTIONS_COUNT + 3];
         in.readStringArray(data);
 
-        this.question = wordEntryFromString(data[0]);
-        this.correctAnswerIndex = Integer.valueOf(data[1]);
-        this.options = new WordEntry[WRONG_OPTIONS_COUNT + 1];
+        this.question = getTextEntryFromString(data[0]);
+        this.correctOptionIndex = Integer.valueOf(data[1]);
+        this.options = new TextEntry[WRONG_OPTIONS_COUNT + 1];
         for (int i = 0; i < this.options.length; ++i) {
-            this.options[i] = wordEntryFromString(data[i + 2]);
+            this.options[i] = getTextEntryFromString(data[i + 2]);
         }
     }
 
@@ -66,67 +69,38 @@ public class TestQuestion implements Parcelable {
 
     public static final int WRONG_OPTIONS_COUNT = 4;
 
-    public static class WordEntry {
-        private final int id;
-        private final String text;
-
-        public WordEntry(int id, String text) {
-            this.id = id;
-            this.text = text;
-        }
-
-        /**
-         * @return - id of the translation so it can be tracked in statistics.
-         */
-        public int getId() {
-            return id;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        @Override
-        public String toString() {
-            return "WordEntry{" +
-                    "id=" + id +
-                    ", text='" + text + '\'' +
-                    '}';
-        }
-    }
-
-    private WordEntry question;
-    private WordEntry[] options;
-    private int correctAnswerIndex;
+    private TextEntry question;
+    private TextEntry[] options;
+    private int correctOptionIndex;
     private Language questionLanguage;
     private Language optionLanguage;
 
-    public WordEntry getQuestion() {
+    public TextEntry getQuestion() {
         return question;
     }
 
-    public void setQuestion(WordEntry question) {
+    public void setQuestion(TextEntry question) {
         this.question = question;
     }
 
-    public WordEntry[] getOptions() {
+    public TextEntry[] getOptions() {
         return options;
     }
 
-    public void setOptions(WordEntry[] options) {
+    public void setOptions(TextEntry[] options) {
         this.options = options;
     }
 
     public int getCorrectOptionIndex() {
-        return correctAnswerIndex;
+        return correctOptionIndex;
     }
 
-    public WordEntry getCorrectOptionWordEntry() {
-        return options[correctAnswerIndex];
+    public TextEntry getCorrectOptionWordEntry() {
+        return options[correctOptionIndex];
     }
 
-    public void setCorrectAnswerIndex(int correctAnswerIndex) {
-        this.correctAnswerIndex = correctAnswerIndex;
+    public void setCorrectOptionIndex(int correctAnswerIndex) {
+        this.correctOptionIndex = correctAnswerIndex;
     }
 
     public Language getQuestionLanguage() {
@@ -150,7 +124,7 @@ public class TestQuestion implements Parcelable {
         return "TestQuestion{" +
                 "question=" + question +
                 ", options=" + Arrays.toString(options) +
-                ", correctAnswerIndex=" + correctAnswerIndex +
+                ", correctOptionIndex=" + correctOptionIndex +
                 '}';
     }
 }

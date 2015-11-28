@@ -13,6 +13,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.peevs.dictpick.model.TextEntry;
+import com.peevs.dictpick.model.TranslationEntry;
 import com.peevs.dictpick.settings.Settings;
 
 import java.util.Arrays;
@@ -86,7 +88,7 @@ public class ExamActivity extends BaseActivity {
         private abstract class OptionMarker implements View.OnClickListener {
             TextView[] optionViews;
             int correctOptionIndex;
-            int questionWordId;
+            long questionWordId;
 
             void disableAnswersClick() {
                 for (TextView tv : optionViews) {
@@ -106,7 +108,7 @@ public class ExamActivity extends BaseActivity {
 
         private class Correct extends OptionMarker {
 
-            Correct(TextView[] optionViews, int questionWordId) {
+            Correct(TextView[] optionViews, long questionWordId) {
                 this.questionWordId = questionWordId;
                 this.optionViews = optionViews;
             }
@@ -120,9 +122,9 @@ public class ExamActivity extends BaseActivity {
         }
 
         private class Wrong extends OptionMarker {
-            private int wrongAnswerWordId;
+            private long wrongAnswerWordId;
 
-            Wrong(TextView[] optionViews, int questionWordId, int wrongAnswerWordId,
+            Wrong(TextView[] optionViews, long questionWordId, long wrongAnswerWordId,
                   int correctOptionIndex) {
                 this.questionWordId = questionWordId;
                 this.optionViews = optionViews;
@@ -139,16 +141,16 @@ public class ExamActivity extends BaseActivity {
             }
         }
 
-        private TextView wordEntryToTextView(TestQuestion.WordEntry entry) {
+        private TextView wordEntryToOptionView(TextEntry entry) {
             TextView result = new TextView(ExamActivity.this);
-            result.setText(entry.getText());
+            result.setText(entry.getText().getVal());
             result.setTextAppearance(ExamActivity.this, R.style.TranslationTextStyle);
             return result;
         }
 
         private void setCorrectOptionView(TextView[] optionViews, int correctOptionIndex,
                                           TestQuestion q) {
-            TextView correctAnswer = wordEntryToTextView(q.getCorrectOptionWordEntry());
+            TextView correctAnswer = wordEntryToOptionView(q.getCorrectOptionWordEntry());
             correctAnswer.setOnClickListener(new Correct(optionViews,
                     q.getCorrectOptionWordEntry().getId()));
             optionViews[correctOptionIndex] = correctAnswer;
@@ -156,7 +158,7 @@ public class ExamActivity extends BaseActivity {
 
         private void setWrongOptionView(TextView[] optionViews, int wrongOptionIndex,
                                         TestQuestion q) {
-            TextView result = wordEntryToTextView(q.getOptions()[wrongOptionIndex]);
+            TextView result = wordEntryToOptionView(q.getOptions()[wrongOptionIndex]);
             result.setOnClickListener(new Wrong(optionViews, q.getCorrectOptionWordEntry().getId(),
                     q.getOptions()[wrongOptionIndex].getId(),
                     q.getCorrectOptionIndex()));
@@ -183,12 +185,12 @@ public class ExamActivity extends BaseActivity {
     public void sayCurrentQuestion(View v) {
         if (currentQuestion != null && foreignLang == currentQuestion.getQuestionLanguage()) {
             //TODO: problem with playing BG, so play only foreignLang (EN)
-            sayQuestion(currentQuestion.getQuestion().getText(),
+            sayQuestion(currentQuestion.getQuestion().getText().getVal(),
                     currentQuestion.getQuestionLanguage());
         }
     }
 
-    void updateStats(int questionWordId, int wrongAnswerId) {
+    void updateStats(long questionWordId, long wrongAnswerId) {
         ExamDbFacade.AnswerStatsEntry statsIn = new ExamDbFacade.AnswerStatsEntry();
         statsIn.setQuestionWordId(questionWordId);
         statsIn.setWrongAnswerWordId(wrongAnswerId);
@@ -255,7 +257,9 @@ public class ExamActivity extends BaseActivity {
         }
 
         // set the question word
-        ((TextView) findViewById(R.id.question_text)).setText(testQuestion.getQuestion().getText());
+        ((TextView) findViewById(R.id.question_text)).setText(
+                testQuestion.getQuestion().getText().getVal());
+
         this.currentQuestion = testQuestion;
         if (autoSayQuestion) {
             sayCurrentQuestion(null);
