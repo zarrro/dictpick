@@ -1,15 +1,22 @@
 package com.peevs.dictpick;
 
+import android.app.ActionBar;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -268,10 +275,75 @@ public class ExamActivity extends BaseActivity {
         LinearLayout answersLayout = (LinearLayout) findViewById(R.id.layout_answers);
         answersLayout.removeAllViews(); // clear the testOptions from previous question
 
-        TestOptionViewsFactory tvFactory = new TestOptionViewsFactory();
-        for (TextView optionView : tvFactory.createAnswerViews(testQuestion)) {
-            answersLayout.addView(optionView);
+        boolean test = Math.random() > 0.5;
+        if(test) {
+            TestOptionViewsFactory tvFactory = new TestOptionViewsFactory();
+            for (TextView optionView : tvFactory.createAnswerViews(testQuestion)) {
+                answersLayout.addView(optionView);
+            }
+        } else {
+            answersLayout.addView(createOpenAnswer(testQuestion.getCorrectOptionWordEntry().
+                    getText().getVal()));
         }
+    }
+
+    private ViewGroup createOpenAnswer(final String correctAnswer) {
+
+        LinearLayout openQuestionLayout = new LinearLayout(this);
+        openQuestionLayout.setOrientation(LinearLayout.VERTICAL);
+
+        RelativeLayout layout = new RelativeLayout(this);
+        openQuestionLayout.addView(layout);
+        EditText answerEdit = new EditText(this);
+        Button check = new Button(this);
+        check.setText("Check");
+        layout.addView(answerEdit);
+        layout.addView(check);
+
+        answerEdit.setHint("Type answer...");
+        answerEdit.requestFocus();
+
+
+        ((RelativeLayout.LayoutParams) answerEdit.getLayoutParams()).addRule(
+                RelativeLayout.ALIGN_PARENT_LEFT);
+        ((RelativeLayout.LayoutParams) check.getLayoutParams()).addRule(
+                RelativeLayout.ALIGN_PARENT_RIGHT);
+
+        class AnswerCheckListener implements View.OnClickListener {
+            EditText et;
+            String correct;
+            ViewGroup layout;
+            ViewGroup outter;
+
+            @Override
+            public void onClick(View v) {
+                String actual = et.getText().toString().trim().toLowerCase();
+                if(correct.toLowerCase().equals(actual)) {
+                    et.setTextColor(Color.GREEN);
+                } else {
+                    et.setTextColor(Color.RED);
+                    et.setPaintFlags(
+                            et.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                    TextView correctAnswer = new TextView(ExamActivity.this);
+                    outter.addView(correctAnswer, 0);
+
+                    correctAnswer.setText(correct);
+                    correctAnswer.setTextAppearance(ExamActivity.this,
+                            R.style.Base_TextAppearance_AppCompat_Large);
+                    correctAnswer.setTextColor(Color.GREEN);
+
+                    v.setEnabled(false);
+                }
+            }
+        }
+
+        AnswerCheckListener ac = new AnswerCheckListener();
+        ac.et = answerEdit;
+        ac.correct = correctAnswer;
+        ac.layout = layout;
+        ac.outter = openQuestionLayout;
+        check.setOnClickListener(ac);
+        return openQuestionLayout;
     }
 
     private void updateAnswerStatsView(long count, float successRate) {

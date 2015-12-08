@@ -22,22 +22,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/btn_newtest"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
         android:onClick="generateTestQuestion"
         android:singleLine="true"
-        android:text="New Test" />
+        android:text="New Test"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true" />
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/btn_newtest"
         android:id="@+id/layout_answers"
         android:layout_toLeftOf="@+id/btn_newtest"
         android:layout_toStartOf="@+id/btn_newtest"
-        android:layout_alignParentEnd="false" />
+        android:layout_alignParentEnd="false"
+        android:layout_below="@+id/btn_listen" />
 
     <TextView
         android:layout_width="fill_parent"
@@ -59,10 +58,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/btn_listen"
-        android:layout_below="@+id/btn_newtest"
-        android:layout_alignParentEnd="true"
         android:onClick="sayCurrentQuestion"
-        android:layout_toEndOf="@+id/layout_answers"
-        android:text="Listen" />
+        android:text="Listen"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true" />
 
 </RelativeLayout>

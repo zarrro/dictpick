@@ -7,66 +7,61 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <android.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#3f51b5"
+        android:elevation="3dp">
+
+        <ImageButton
+            android:id="@+id/btn_take_test"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/btn_hint_test"
+            android:cropToPadding="false"
+            android:onClick="startExamActivity"
+            android:src="@drawable/ic_testaplus"
+            />
+
+        <TextView
+            android:layout_gravity="right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Target lang"
+            android:textColor="#ffffff"
+            android:paddingRight="10pt"
+            android:id="@+id/translate_target_lang" />
+
+        <ImageButton
+            android:layout_gravity="right"
+            android:id="@+id/swap_langs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/btn_swap_langs"
+            android:onClick="swapLanguages"
+            android:src="@drawable/ic_swap_langs_1_white" />
+
+        <TextView
+            android:layout_gravity="right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Src lang"
+            android:id="@+id/translate_src_lang"
+            android:textColor="#ffffff"
+            />
+    </android.widget.Toolbar>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/primary_material_light"
-        android:elevation="6dp"
         android:orientation="vertical"
-        android:weightSum="1">
-
-        <android.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#3f51b5"
-            android:elevation="12dp">
-
-            <ImageButton
-                android:id="@+id/btn_take_test"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="right"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/btn_hint_test"
-                android:cropToPadding="false"
-                android:onClick="startExamActivity"
-                android:src="@drawable/ic_testaplus"
-                 />
-
-            <TextView
-                android:layout_gravity="right"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Target lang"
-                android:textColor="#ffffff"
-                android:paddingRight="10pt"
-                android:id="@+id/translate_target_lang" />
-
-            <ImageButton
-                android:layout_gravity="right"
-                android:id="@+id/swap_langs"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/btn_swap_langs"
-                android:onClick="swapLanguages"
-                android:src="@drawable/ic_swap_langs_1_white" />
-
-            <TextView
-                android:layout_gravity="right"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Src lang"
-                android:id="@+id/translate_src_lang"
-                android:textColor="#ffffff"
-                />
-
-        </android.widget.Toolbar>
-
+        >
 
         <EditText
             android:id="@+id/edit_srcText"
@@ -83,7 +78,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.10"
-            android:background="@color/background_material_light"
             android:gravity="right"
             android:orientation="horizontal"
             android:weightSum="1">
@@ -122,6 +116,12 @@
         </RelativeLayout>
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="5px"
+        android:background="#3f51b5"
+        android:elevation="3dp" />
+s
     <LinearLayout
         android:id="@+id/layout_translation"
         android:layout_width="match_parent"
