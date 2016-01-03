@@ -22,7 +22,7 @@ import java.util.Random;
  */
 public class Translator {
 
-    private static final int tkk = 402953;
+    private static final int tkk = 403214;
 
     public static final String TAG = Translator.class.getSimpleName();
 
@@ -34,7 +34,7 @@ public class Translator {
     public static final String QUERY_STRING_TEMPLATE = "/translate_a/single?"
             + "client=t&sl=%s&tl=%s&dt=%s&ie=%s&oe=%s";
     public static final String QUERY_STRING_TTS_TEMPLATE =
-            "/translate_tts?&client=t&tl=%s&ie=UTF-8&tk=699068|821817&q=%s";
+            "/translate_tts?&client=t&tl=%s&ie=UTF-8%s&q=%s";
     public static final String HTTP_HEADER_USER_AGENT = "Mozilla/5.0 (Windows NT 6.1)"
             + " AppleWebKit/537.36 (HTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
 
@@ -61,7 +61,8 @@ public class Translator {
                 srcLang, targetLang, mode, charset, charset));
         httpQueryString.append(kc());
         httpQueryString.append(tkk(srcText));
-        httpQueryString.append("&q=" + URLEncoder.encode(srcText, charset));
+        String encodedQ = URLEncoder.encode(srcText, charset);
+        httpQueryString.append("&q=" + encodedQ);
 
         String queryStr = httpQueryString.toString();
         Log.i(TAG, queryStr);
@@ -124,6 +125,7 @@ public class Translator {
         InputStream in = null;
         try {
             URL url = new URL(PROTO, HOST, String.format(QUERY_STRING_TTS_TEMPLATE, langStr,
+                    tkk(text),
                     URLEncoder.encode(text, "UTF-8")));
             URLConnection gooCon = url.openConnection();
             gooCon.setRequestProperty("User-Agent", HTTP_HEADER_USER_AGENT);

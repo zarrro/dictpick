@@ -14,4 +14,8 @@
     <string name="btn_swap_langs">Swap languages</string>
     <string name="btn_paste_clipboard">Paste clipboard</string>
 
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="enter_key_name">Go!</string>
+
 </resources>

@@ -1,0 +1,109 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:padding="15dp"
+    tools:context="com.peevs.dictpick.view.Dict">
+
+
+    <RelativeLayout
+        android:id="@+id/src_text_layout"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="top"
+        android:orientation="horizontal"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true">
+
+        <ImageButton
+            android:id="@+id/btn_listen_dict"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="5pt"
+            android:background="?android:attr/selectableItemBackground"
+            android:src="@drawable/ic_listen_rounded_black" />
+
+        <EditText
+            android:id="@+id/edit_srcText"
+            android:singleLine="true"
+            android:lines="1"
+            android:scrollHorizontally="true"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/btn_listen_dict"
+            android:minHeight="40dp" />
+
+        <!-- ImageButton
+            android:id="@+id/btn_translate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:background="?android:attr/selectableItemBackground"
+            android:src="@drawable/ic_search_rounded_black" / -->
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_translation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="24dp"
+        android:layout_below="@+id/src_text_layout" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="bottom"
+        android:layout_alignParentBottom="true"
+        android:paddingBottom="6dp">
+
+        <ImageButton
+            android:id="@+id/btn_paste_clip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="5pt"
+            android:background="?android:attr/selectableItemBackground"
+            android:src="@drawable/ic_paste_rounded_black" />
+
+        <TextView
+            android:id="@+id/translate_src_lang"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_toStartOf="@+id/swap_langs"
+            android:layout_centerVertical="true"
+            android:text="Src lang"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <ImageButton
+            android:id="@+id/swap_langs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/btn_swap_langs"
+            android:src="@drawable/ic_swap_langs_straight_black" />
+
+        <TextView
+            android:id="@+id/translate_target_lang"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_toEndOf="@+id/swap_langs"
+            android:layout_centerVertical="true"
+            android:paddingRight="10pt"
+            android:text="Target lang"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    </RelativeLayout>
+
+</RelativeLayout>
+

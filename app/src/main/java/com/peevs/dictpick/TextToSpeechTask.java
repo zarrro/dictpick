@@ -78,7 +78,7 @@ public class TextToSpeechTask extends AsyncTask<Void, Void, Void> {
             try {
                 outputStream = new FileOutputStream(speechFile);
                 Log.i(TAG, "Download text to speech speechFile: " + speechFile.getAbsolutePath());
-                Translator.textToSpeach(this.text, lang, outputStream);
+                Translator.textToSpeach(text, lang, outputStream);
             } catch (IOException e) {
                 Log.e(TAG, "Failed to store text to speech filesDir ", e);
                 speechFile.delete();

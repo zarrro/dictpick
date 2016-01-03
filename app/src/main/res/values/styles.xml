@@ -6,8 +6,10 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <style name="TranslationTextStyle" parent="Base.TextAppearance.AppCompat">
-        <item name="android:textSize">14pt</item>
+    <style name="TranslationTextStyle" parent="android:TextAppearance.DeviceDefault.Medium" />
+
+    <style name="MyCustomTabLayout" parent="Widget.Design.TabLayout">
+        <item name="tabIndicatorColor">@color/accent_material_light</item>
     </style>
 
 </resources>
