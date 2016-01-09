@@ -1,18 +1,13 @@
 package com.peevs.dictpick.view;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.content.SharedPreferences;
+import android.app.Fragment;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Fragment;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -24,20 +19,18 @@ import android.widget.Toast;
 
 import com.peevs.dictpick.ExamDbFacade;
 import com.peevs.dictpick.ExamDbHelper;
-import com.peevs.dictpick.NotificationPublisher;
 import com.peevs.dictpick.R;
 import com.peevs.dictpick.TabFragmentHost;
 import com.peevs.dictpick.TextToSpeechTask;
 import com.peevs.dictpick.model.TestQuestion;
 import com.peevs.dictpick.model.TextEntry;
-import com.peevs.dictpick.settings.Settings;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-public class Exam extends Fragment {
+public class ExamTab extends Fragment {
 
     class GenerateTestTask extends AsyncTask<Void, Void, TestQuestion> {
 
@@ -58,7 +51,7 @@ public class Exam extends Fragment {
 
         @Override
         protected void onPostExecute(TestQuestion result) {
-            Exam.this.displayTestQuestion(result);
+            ExamTab.this.displayTestQuestion(result);
         }
     }
 
@@ -124,7 +117,7 @@ public class Exam extends Fragment {
             public void onClick(View v) {
                 markCorrectOption(v);
                 disableAnswersClick();
-                Exam.this.updateStats(questionWordId, -1);
+                ExamTab.this.updateStats(questionWordId, -1);
             }
         }
 
@@ -189,7 +182,7 @@ public class Exam extends Fragment {
         }
     }
 
-    private static final String TAG = "Exam";
+    private static final String TAG = "ExamTab";
     private Random rand = new Random(System.currentTimeMillis());
     private TestQuestion currentQuestion = null;
 
@@ -201,7 +194,7 @@ public class Exam extends Fragment {
     private TextView answerCountStat;
     private TextView answerSuccessRateStat;
 
-    public Exam() {
+    public ExamTab() {
         // Required empty public constructor
     }
 
@@ -216,7 +209,7 @@ public class Exam extends Fragment {
         super.onCreate(savedInstanceState);
         if (testQuestion != null) {
             Log.i(TAG, String.format(
-                    "Exam started with testQuestion:%n %s", testQuestion));
+                    "ExamTab started with testQuestion:%n %s", testQuestion));
             displayTestQuestion(testQuestion);
         } else {
             // activity is started from within the DictPick app - start with a new question

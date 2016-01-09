@@ -11,7 +11,7 @@ import android.support.v13.app.FragmentPagerAdapter;
 public class TabsPagerAddapter extends FragmentPagerAdapter {
 
     final int PAGE_COUNT = 3;
-    private String tabTitles[] = new String[] { "Dict", "Quiz", "Word Books" };
+    private String tabTitles[] = new String[] { "DictTab", "Quiz", "Word Books" };
     private Context context;
 
     public TabsPagerAddapter(FragmentManager fm, Context context) {
@@ -28,11 +28,11 @@ public class TabsPagerAddapter extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
         switch (position) {
             case 0:
-                return new Dict();
+                return new DictTab();
             case 1:
-                return new Exam();
+                return new ExamTab();
             case 2:
-                return new WordsBook();
+                return new WordsbookTab();
             default:
                 throw new IllegalArgumentException("tap page position");
         }

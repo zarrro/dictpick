@@ -60,4 +60,15 @@ public final class ExamDbContract {
                 "DROP TABLE IF EXISTS " + TABLE_NAME;
     }
 
+    public static final class WordbookTable implements BaseColumns {
+
+        public static final String TABLE_NAME = "wordbook";
+        public static final String NAME = "name";
+
+        public static final String SQL_CREATE =
+                "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
+                        _ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                        NAME + TEXT_TYPE;
+    }
+
 }

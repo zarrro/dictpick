@@ -11,6 +11,7 @@ import com.peevs.dictpick.model.TestQuestion;
 import com.peevs.dictpick.model.Text;
 import com.peevs.dictpick.model.TextEntry;
 import com.peevs.dictpick.model.TranslationEntry;
+import com.peevs.dictpick.model.Wordsbook;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -404,4 +405,53 @@ public class ExamDbFacade {
         return new TextEntry(new Text(c.getString(textColumn), lang), c.getInt(2));
     }
 
+    public Wordsbook[] listAllWordsbooks() {
+        Log.d(TAG, String.format("listAllWordsbooks invoked"));
+
+        Cursor c = listAllWordsbooksCursor();
+        int i = 0;
+        Wordsbook[] ret = new Wordsbook[c.getCount()];
+        if (c.moveToFirst())
+            do {
+                ret[i] = new Wordsbook(c.getInt(0), c.getString(1));
+                i++;
+            } while (c.moveToNext());
+        return ret;
+    }
+
+    private Cursor listAllWordsbooksCursor() {
+        SQLiteDatabase examDb = null;
+        Cursor c = null;
+        examDb = sqliteHelper.getReadableDatabase();
+        try {
+            examDb = sqliteHelper.getReadableDatabase();
+
+            String[] projection = {
+                    ExamDbContract.WordbookTable._ID,
+                    ExamDbContract.WordbookTable.NAME
+            };
+
+            c = examDb.query(
+                    ExamDbContract.WordbookTable.TABLE_NAME,  // The table to query
+                    projection,             // The columns to return
+                    null,                   // The columns for the WHERE clause
+                    null,                   // The values for the WHERE clause
+                    null,                   // don't group the rows
+                    null,                   // don't filter by row groups
+                    null                    // The sort order
+            );
+
+            if (c == null || c.getCount() == 0) {
+                Log.d(TAG, "listAllWordsbooksCursor - no wordbooks found");
+            } else {
+                Log.d(TAG, "listAllWordsbooksCursor - " + c.getCount() + " wordbooks retrieved");
+            }
+        } finally {
+            if (examDb != null) {
+                examDb.close();
+            }
+        }
+
+        return c;
+    }
 }

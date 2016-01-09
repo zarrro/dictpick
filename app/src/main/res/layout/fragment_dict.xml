@@ -4,7 +4,7 @@
     android:layout_height="fill_parent"
     android:orientation="vertical"
     android:padding="15dp"
-    tools:context="com.peevs.dictpick.view.Dict">
+    tools:context="com.peevs.dictpick.view.DictTab">
 
 
     <RelativeLayout

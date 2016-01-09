@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Dict extends Fragment {
+public class DictTab extends Fragment {
 
     private static final String TAG = "MainActivity";
     private String errorMessage = null;
@@ -289,7 +289,7 @@ public class Dict extends Fragment {
             initTextView();
             initStar();
 
-            RelativeLayout layout = new RelativeLayout(Dict.this.parentActivity);
+            RelativeLayout layout = new RelativeLayout(DictTab.this.parentActivity);
             layout.addView(textView);
             layout.addView(star);
 
@@ -313,7 +313,7 @@ public class Dict extends Fragment {
         }
 
         private void initStar() {
-            star = new ImageButton(Dict.this.parentActivity);
+            star = new ImageButton(DictTab.this.parentActivity);
             star.setBackgroundColor(Color.TRANSPARENT);
             updateStarView();
         }
@@ -329,9 +329,9 @@ public class Dict extends Fragment {
         }
 
         private void initTextView() {
-            textView = new TextView(Dict.this.parentActivity);
+            textView = new TextView(DictTab.this.parentActivity);
             textView.setText(this.we.getTargetText().getVal());
-            textView.setTextAppearance(Dict.this.parentActivity, R.style.TranslationTextStyle);
+            textView.setTextAppearance(DictTab.this.parentActivity, R.style.TranslationTextStyle);
             textView.setPaddingRelative(0, 5, 0, 0);
         }
 
@@ -402,7 +402,7 @@ public class Dict extends Fragment {
         protected void onPostExecute(List<TranslationEntry> wordEntries) {
             if (wordEntries != null) {
                 for (TranslationEntry we : wordEntries) {
-                    Dict.this.translationsLayout.addView(new TranslationItemView(we).init());
+                    DictTab.this.translationsLayout.addView(new TranslationItemView(we).init());
                 }
             } else if (errorMessage != null) {
                 Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
@@ -427,7 +427,7 @@ public class Dict extends Fragment {
 
             // save to DB
             ExamDbFacade examDbFacade =
-                    new ExamDbFacade(new ExamDbHelper(Dict.this.parentActivity));
+                    new ExamDbFacade(new ExamDbHelper(DictTab.this.parentActivity));
             try {
                 wordId = examDbFacade.saveTranslation(
                         ti.getWe().getSrcText().getVal(),
@@ -445,16 +445,16 @@ public class Dict extends Fragment {
         protected void onPostExecute(Long result) {
             if (result == null || result == -1) {
                 if (errorMessage != null) {
-                    Toast.makeText(Dict.this.parentActivity, errorMessage, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(DictTab.this.parentActivity, errorMessage, Toast.LENGTH_SHORT).show();
                     errorMessage = null;
                 } else {
-                    Toast.makeText(Dict.this.parentActivity, "Error on saving...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(DictTab.this.parentActivity, "Error on saving...", Toast.LENGTH_SHORT).show();
                 }
             } else if (result.intValue() == ExamDbFacade.UNIQUE_CONTRAINT_FAILED_ERR_CODE) {
-                Toast.makeText(Dict.this.parentActivity, "Translation is already saved.",
+                Toast.makeText(DictTab.this.parentActivity, "Translation is already saved.",
                         Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(Dict.this.parentActivity, String.format("Saved translation number %s", result),
+                Toast.makeText(DictTab.this.parentActivity, String.format("Saved translation number %s", result),
                         Toast.LENGTH_SHORT).show();
                 ti.update();
             }
@@ -477,8 +477,8 @@ public class Dict extends Fragment {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            if (Dict.this.translationsLayout.getChildCount() > 0) {
-                Dict.this.translationsLayout.removeAllViews();
+            if (DictTab.this.translationsLayout.getChildCount() > 0) {
+                DictTab.this.translationsLayout.removeAllViews();
             }
         }
     }
