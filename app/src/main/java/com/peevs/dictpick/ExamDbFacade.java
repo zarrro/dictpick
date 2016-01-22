@@ -111,12 +111,13 @@ public class ExamDbFacade {
         this.sqliteHelper = sqliteHelper;
     }
 
-    public TestQuestion getRandomTestQuestion(Language srcLang, Language targetLang, int wrongOptionsCount) {
+    public TestQuestion getRandomTestQuestion(Language srcLang, Language targetLang,
+                                              int wrongOptionsCount, int book_id) {
         SQLiteDatabase examDb = null;
         Cursor c = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
-            c = queryAllTranslations(srcLang, targetLang, examDb);
+            c = queryAllTranslations(srcLang, targetLang, examDb, book_id);
             if (c.getCount() <= 0) {
                 return null;
             }
@@ -306,10 +307,7 @@ public class ExamDbFacade {
     }
 
     private Cursor queryAllTranslations(Language srcLang, Language targetLang,
-                                        SQLiteDatabase examDb) {
-        Log.d(TAG, String.format("getAllTranslations - foreignLang = %s, nativeLang = %s",
-                srcLang.toString(), targetLang.toString()));
-
+                                        SQLiteDatabase examDb, int book_id) {
         Cursor c = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
@@ -322,14 +320,35 @@ public class ExamDbFacade {
                     ExamDbContract.WordsTable.T_LANG
             };
 
-            String whereClause = String.format("%s = '%s' and %s = '%s'",
-                    ExamDbContract.WordsTable.S_LANG, srcLang.toString().toLowerCase(),
-                    ExamDbContract.WordsTable.T_LANG, targetLang.toString().toLowerCase());
+            StringBuilder whereClauseBuilder = new StringBuilder();
+            boolean and = false;
+            if(srcLang != null) {
+                whereClauseBuilder.append(ExamDbContract.WordsTable.S_LANG);
+                whereClauseBuilder.append(" = ");
+                whereClauseBuilder.append("'" + srcLang.toString().toLowerCase() + "'");
+                and = true;
+            }
+            if(and){
+                whereClauseBuilder.append(" and ");
+            }
+            if(srcLang != null) {
+                whereClauseBuilder.append(ExamDbContract.WordsTable.T_LANG);
+                whereClauseBuilder.append(" = ");
+                whereClauseBuilder.append("'" + targetLang.toString().toLowerCase() + "'");
+                and = true;
+            }
+            if(and){
+                whereClauseBuilder.append(" and ");
+            }
+
+            whereClauseBuilder.append(ExamDbContract.WordsTable.BOOKID);
+            whereClauseBuilder.append(" = ");
+            whereClauseBuilder.append(book_id);
 
             c = examDb.query(
                     ExamDbContract.WordsTable.TABLE_NAME,  // The table to query
                     projection,             // The columns to return
-                    whereClause,            // The columns for the WHERE clause
+                    whereClauseBuilder.toString(), // The columns for the WHERE clause
                     null,                   // The values for the WHERE clause
                     null,                   // don't group the rows
                     null,                   // don't filter by row groups
@@ -367,14 +386,9 @@ public class ExamDbFacade {
 
         boolean inverse = rand.nextInt(2) == 1;
         int answersColumn = inverse ? 0 : 1;
-        final int stCol = 0;
-        final int ttCol = 1;
-        final int idCol = 2;
-        final int slCol = 3;
-        final int tlCol = 4;
 
-        TestQuestion testQuestion = new TestQuestion(teFromCursor(c, questionIndex, stCol, ttCol,
-                slCol, tlCol, idCol));
+        c.moveToPosition(questionIndex);
+        TestQuestion testQuestion = new TestQuestion(teFromCursor(c));
         testQuestion.setInverse(inverse);
 
         Language optionLanguge = !inverse ? targetLang : srcLang;
@@ -391,11 +405,15 @@ public class ExamDbFacade {
         return testQuestion;
     }
 
-    private TranslationEntry teFromCursor(Cursor c, int row, int srcTextCol, int targetTextCol,
-                                          int srcLangCol, int targetLangCol, int idCol) {
-        c.moveToPosition(row);
-        Text st = new Text(c.getString(srcTextCol), Language.val(c.getString(srcLangCol)));
-        Text tt = new Text(c.getString(targetTextCol), Language.val(c.getString(targetLangCol)));
+    private TranslationEntry teFromCursor(Cursor c) {
+        final int stCol = 0;
+        final int ttCol = 1;
+        final int idCol = 2;
+        final int slCol = 3;
+        final int tlCol = 4;
+
+        Text st = new Text(c.getString(stCol), Language.val(c.getString(slCol)));
+        Text tt = new Text(c.getString(ttCol), Language.val(c.getString(tlCol)));
         return new TranslationEntry(c.getLong(idCol), st, tt);
     }
 
@@ -417,6 +435,32 @@ public class ExamDbFacade {
                 i++;
             } while (c.moveToNext());
         return ret;
+    }
+
+    public TranslationEntry[] listTranslationEntries(int book_id) {
+        Log.d(TAG, String.format("listTranslationEntries invoked"));
+
+        SQLiteDatabase examDb = null;
+        Cursor c = null;
+        TranslationEntry[] result = null;
+        try {
+            examDb = sqliteHelper.getReadableDatabase();
+            c = queryAllTranslations(null, null, examDb, book_id);
+            if (c.getCount() <= 0) {
+                return null;
+            }
+            result = new TranslationEntry[c.getCount()];
+            int i = 0;
+            while(c.moveToNext()) {
+                result[i] = teFromCursor(c);
+                ++i;
+            }
+        } finally {
+            if (c != null) c.close();
+            if (examDb != null) examDb.close();
+        }
+
+        return result;
     }
 
     private Cursor listAllWordsbooksCursor() {

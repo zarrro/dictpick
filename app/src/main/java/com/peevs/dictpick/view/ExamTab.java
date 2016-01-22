@@ -17,6 +17,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.peevs.dictpick.ExamDbContract;
 import com.peevs.dictpick.ExamDbFacade;
 import com.peevs.dictpick.ExamDbHelper;
 import com.peevs.dictpick.R;
@@ -46,7 +47,8 @@ public class ExamTab extends Fragment {
             ExamDbFacade examDb = new ExamDbFacade(new ExamDbHelper(parentActivity));
             return examDb.getRandomTestQuestion(parentActivity.getForeignLanguage(),
                     parentActivity.getNativeLanguage(),
-                    TestQuestion.WRONG_OPTIONS_COUNT);
+                    TestQuestion.WRONG_OPTIONS_COUNT,
+                    ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
         }
 
         @Override
@@ -242,11 +244,11 @@ public class ExamTab extends Fragment {
         });
         ((Button) v.findViewById(R.id.btn_listen_exam)).setOnClickListener(
                 new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sayCurrentQuestion();
-            }
-        });
+                    @Override
+                    public void onClick(View v) {
+                        sayCurrentQuestion();
+                    }
+                });
     }
 
     private void displayTestQuestion(TestQuestion testQuestion) {

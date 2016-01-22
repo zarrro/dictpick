@@ -22,6 +22,7 @@ public final class ExamDbContract {
         public static final String T_LANG = "t_lang";
         public static final String RATING = "rating";
         public static final String TESTORDER = "tesorder";
+        public static final String BOOKID = "book_id";
 
         public static final String SQL_CREATE =
                 "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
@@ -37,6 +38,8 @@ public final class ExamDbContract {
 
         public static final String SQL_DELETE =
                 "DROP TABLE IF EXISTS " + TABLE_NAME;
+
+        public static final int DEFAULT_BOOK_ID = 1;
 
     }
 

@@ -31,7 +31,8 @@ public class NotificationPublisher extends BroadcastReceiver {
         Language srcLang = Language.valueOf(sharedPrefs.getString("key_pref_src_lang", "EN"));
         Language targetLang = Language.valueOf(sharedPrefs.getString("key_pref_target_lang", "BG"));
         Notification notification = getNotification(context, examDbFacade.getRandomTestQuestion(
-                srcLang, targetLang, TestQuestion.WRONG_OPTIONS_COUNT));
+                srcLang, targetLang, TestQuestion.WRONG_OPTIONS_COUNT,
+                ExamDbContract.WordsTable.DEFAULT_BOOK_ID));
 
         // notification is auto dismissed when its clicked
         notification.flags = Notification.FLAG_AUTO_CANCEL;

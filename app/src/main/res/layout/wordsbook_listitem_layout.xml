@@ -1,5 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ListView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/wordsbook_listview"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content" />
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_margin="5pt"
+    android:padding="4pt">
+    <RelativeLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/foreign_lang_li"
+            android:layout_marginLeft="5pt"
+            ></TextView>
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/foreign_text_li"
+            android:layout_toRightOf="@+id/foreign_lang_li"
+            android:layout_marginLeft="5pt"
+            ></TextView>
+    </RelativeLayout>
+    <RelativeLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/native_lang_li"
+            android:layout_marginLeft="5pt"
+            ></TextView>
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/native_text_li"
+            android:layout_marginLeft="5pt"
+            android:layout_toRightOf="@+id/native_lang_li"
+            ></TextView>
+    </RelativeLayout>
+
+</LinearLayout>
