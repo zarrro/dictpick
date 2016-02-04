@@ -19,9 +19,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,7 +46,6 @@ import java.util.Map;
 public class DictTab extends Fragment {
 
     private static final String TAG = "MainActivity";
-    private String errorMessage = null;
     private ClipboardManager clipboard;
 
     private Language translateSrcLang;
@@ -54,7 +55,7 @@ public class DictTab extends Fragment {
 
     // fragment view elements
     private EditText sourceTextInput;
-    private LinearLayout translationsLayout;
+    private ListView translationsView;
     private ImageButton pasteButton;
     private TabFragmentHost parentActivity;
 
@@ -111,7 +112,7 @@ public class DictTab extends Fragment {
     private void initFragmentViewMembers(View v) {
         sourceTextInput = (EditText) v.findViewById(R.id.edit_srcText);
         pasteButton = (ImageButton) v.findViewById(R.id.btn_paste_clip);
-        translationsLayout = (LinearLayout) v.findViewById(R.id.layout_translation);
+        translationsView = (ListView) v.findViewById(R.id.layout_translation);
     }
 
     private void attachButtonListeners(View v) {
@@ -142,7 +143,7 @@ public class DictTab extends Fragment {
 
     private void translate() {
         // check if there is any translations (i.e. if Translate is not already clicked)
-        if (translationsLayout.getChildCount() == 0) {
+        if (translationsView.getChildCount() == 0) {
             String val = getSrcText();
 
             if (val != null && !(val = val.trim()).isEmpty()) {
@@ -274,72 +275,6 @@ public class DictTab extends Fragment {
         // other event listeners could follow
     }
 
-    class TranslationItemView {
-
-        private final TranslationEntry we;
-
-        private TextView textView;
-        private ImageButton star;
-
-        TranslationItemView(TranslationEntry we) {
-            this.we = we;
-        }
-
-        View init() {
-            initTextView();
-            initStar();
-
-            RelativeLayout layout = new RelativeLayout(DictTab.this.parentActivity);
-            layout.addView(textView);
-            layout.addView(star);
-
-            ((RelativeLayout.LayoutParams) textView.getLayoutParams()).addRule(
-                    RelativeLayout.ALIGN_PARENT_LEFT);
-            ((RelativeLayout.LayoutParams) star.getLayoutParams()).addRule(
-                    RelativeLayout.ALIGN_PARENT_RIGHT);
-            return layout;
-        }
-
-        /**
-         * Update existing translations view.
-         * - to be invoked on the UI thread only
-         * - to be invoked only after init()
-         */
-        void update() {
-            if (star == null)
-                throw new IllegalStateException("star is not set. Invoke init.");
-            updateStarView();
-            // other view updates to be added here when needed
-        }
-
-        private void initStar() {
-            star = new ImageButton(DictTab.this.parentActivity);
-            star.setBackgroundColor(Color.TRANSPARENT);
-            updateStarView();
-        }
-
-        private void updateStarView() {
-            if (this.we.getId() != ExamDbFacade.ID_NOT_EXISTS) {
-                star.setImageResource(R.drawable.ic_star_enabled);
-                star.setEnabled(false);
-            } else {
-                star.setImageResource(R.drawable.ic_star_disabled);
-                star.setOnClickListener(new SaveTranslationItemTask(this));
-            }
-        }
-
-        private void initTextView() {
-            textView = new TextView(DictTab.this.parentActivity);
-            textView.setText(this.we.getTargetText().getVal());
-            textView.setTextAppearance(DictTab.this.parentActivity, R.style.TranslationTextStyle);
-            textView.setPaddingRelative(0, 5, 0, 0);
-        }
-
-        public TranslationEntry getWe() {
-            return we;
-        }
-    }
-
     class TranslateTask extends AsyncTask<String, Void, List<TranslationEntry>> {
 
         private static final String TAG = "GenerateTestTask";
@@ -401,68 +336,14 @@ public class DictTab extends Fragment {
         @Override
         protected void onPostExecute(List<TranslationEntry> wordEntries) {
             if (wordEntries != null) {
-                for (TranslationEntry we : wordEntries) {
-                    DictTab.this.translationsLayout.addView(new TranslationItemView(we).init());
-                }
+                DictTranslationsListAdapter translationsAdapter =
+                        new DictTranslationsListAdapter(parentActivity,
+                                wordEntries.toArray(new TranslationEntry[wordEntries.size()]));
+                translationsView.setAdapter(translationsAdapter);
             } else if (errorMessage != null) {
                 Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_SHORT).show();
                 errorMessage = null;
             }
-        }
-    }
-
-    class SaveTranslationItemTask extends AsyncTask<Void, Void, Long>
-            implements View.OnClickListener {
-        private final TranslationItemView ti;
-
-        SaveTranslationItemTask(TranslationItemView ti) {
-            if (ti == null || ti.getWe() == null)
-                throw new IllegalArgumentException("TranslationItemView");
-            this.ti = ti;
-        }
-
-        @Override
-        protected Long doInBackground(Void... params) {
-            long wordId = ExamDbFacade.ID_NOT_EXISTS;
-
-            // save to DB
-            ExamDbFacade examDbFacade =
-                    new ExamDbFacade(new ExamDbHelper(DictTab.this.parentActivity));
-            try {
-                wordId = examDbFacade.saveTranslation(
-                        ti.getWe().getSrcText().getVal(),
-                        ti.getWe().getTargetText().getVal(),
-                        ti.getWe().getSrcText().getLang().toString().toLowerCase(),
-                        ti.getWe().getTargetText().getLang().toString().toLowerCase());
-                ti.getWe().setId(wordId);
-            } catch (ExamDbFacade.AlreadyExistsException e) {
-                errorMessage = e.getMessage();
-            }
-            return wordId;
-        }
-
-        @Override
-        protected void onPostExecute(Long result) {
-            if (result == null || result == -1) {
-                if (errorMessage != null) {
-                    Toast.makeText(DictTab.this.parentActivity, errorMessage, Toast.LENGTH_SHORT).show();
-                    errorMessage = null;
-                } else {
-                    Toast.makeText(DictTab.this.parentActivity, "Error on saving...", Toast.LENGTH_SHORT).show();
-                }
-            } else if (result.intValue() == ExamDbFacade.UNIQUE_CONTRAINT_FAILED_ERR_CODE) {
-                Toast.makeText(DictTab.this.parentActivity, "Translation is already saved.",
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(DictTab.this.parentActivity, String.format("Saved translation number %s", result),
-                        Toast.LENGTH_SHORT).show();
-                ti.update();
-            }
-        }
-
-        @Override
-        public void onClick(View v) {
-            execute();
         }
     }
 
@@ -477,10 +358,10 @@ public class DictTab extends Fragment {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            if (DictTab.this.translationsLayout.getChildCount() > 0) {
-                DictTab.this.translationsLayout.removeAllViews();
+            if (translationsView.getAdapter() != null &&
+                    translationsView.getAdapter().getCount() > 0) {
+                translationsView.setAdapter(null);
             }
         }
     }
-
 }

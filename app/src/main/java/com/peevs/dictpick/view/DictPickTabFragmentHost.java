@@ -1,8 +1,5 @@
 package com.peevs.dictpick.view;
 
-import android.app.Activity;
-import android.content.Context;
-
 import com.peevs.dictpick.Language;
 
 /**

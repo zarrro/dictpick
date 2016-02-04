@@ -47,13 +47,20 @@
 
     </RelativeLayout>
 
-    <LinearLayout
+    <ListView
+        android:id="@+id/layout_translation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_below="@+id/src_text_layout"></ListView>
+
+    <!-- LinearLayout
         android:id="@+id/layout_translation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_marginTop="24dp"
-        android:layout_below="@+id/src_text_layout" />
+        android:layout_below="@+id/src_text_layout" / -->
 
     <RelativeLayout
         android:layout_width="match_parent"

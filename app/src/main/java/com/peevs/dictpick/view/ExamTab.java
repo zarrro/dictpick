@@ -187,14 +187,13 @@ public class ExamTab extends Fragment {
     private static final String TAG = "ExamTab";
     private Random rand = new Random(System.currentTimeMillis());
     private TestQuestion currentQuestion = null;
-
-    private TestQuestion testQuestion = null;
     private TabFragmentHost parentActivity;
 
     private TextView questionView;
     private LinearLayout layout_answers;
     private TextView answerCountStat;
     private TextView answerSuccessRateStat;
+    private boolean isSeen;
 
     public ExamTab() {
         // Required empty public constructor
@@ -209,14 +208,7 @@ public class ExamTab extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (testQuestion != null) {
-            Log.i(TAG, String.format(
-                    "ExamTab started with testQuestion:%n %s", testQuestion));
-            displayTestQuestion(testQuestion);
-        } else {
-            // activity is started from within the DictPick app - start with a new question
-            new GenerateTestTask().execute();
-        }
+        isSeen = false;
     }
 
     @Override
@@ -226,6 +218,16 @@ public class ExamTab extends Fragment {
         initViewMembers(v);
         attachButtonListeners(v);
         return v;
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (!isSeen && isVisibleToUser) {
+            isSeen = true;
+            // activity is started from within the DictPick app - start with a new question
+            new GenerateTestTask().execute();
+        }
     }
 
     private void initViewMembers(View v) {

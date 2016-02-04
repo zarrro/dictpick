@@ -18,8 +18,7 @@ public class MainActivity extends TabFragmentHost {
 
         // Get the ViewPager and set it's PagerAdapter so that it can display items
         ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
-        viewPager.setAdapter(new TabsPagerAddapter(getFragmentManager(),
-                MainActivity.this));
+        viewPager.setAdapter(new TabsPagerAddapter(getFragmentManager(), this));
 
         // Give the TabLayout the ViewPager
         TabLayout tabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
@@ -33,7 +32,4 @@ public class MainActivity extends TabFragmentHost {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-
-
-
 }
