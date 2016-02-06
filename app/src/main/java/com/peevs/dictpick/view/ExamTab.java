@@ -15,7 +15,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.peevs.dictpick.ExamDbContract;
 import com.peevs.dictpick.ExamDbFacade;
@@ -53,7 +52,8 @@ public class ExamTab extends Fragment {
 
         @Override
         protected void onPostExecute(TestQuestion result) {
-            ExamTab.this.displayTestQuestion(result);
+            ExamTab.this.currentQuestion = result;
+            ExamTab.this.displayCurrentQuestion();
         }
     }
 
@@ -186,17 +186,19 @@ public class ExamTab extends Fragment {
 
     private static final String TAG = "ExamTab";
     private Random rand = new Random(System.currentTimeMillis());
+
     private TestQuestion currentQuestion = null;
+    private TestQuestion notificationQuestion = null;
     private TabFragmentHost parentActivity;
 
     private TextView questionView;
     private LinearLayout layout_answers;
     private TextView answerCountStat;
     private TextView answerSuccessRateStat;
-    private boolean isSeen;
+    private boolean hasBeenSeen;
 
     public ExamTab() {
-        // Required empty public constructor
+
     }
 
     @Override
@@ -208,24 +210,32 @@ public class ExamTab extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        isSeen = false;
+        hasBeenSeen = false;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_exam, container, false);
-        initViewMembers(v);
         attachButtonListeners(v);
+        initViewMembers(v);
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (notificationQuestion != null) {
+            currentQuestion = notificationQuestion;
+            displayCurrentQuestion();
+            notificationQuestion = null;
+        }
     }
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
-        if (!isSeen && isVisibleToUser) {
-            isSeen = true;
-            // activity is started from within the DictPick app - start with a new question
+        if (isVisibleToUser && currentQuestion == null) {
             new GenerateTestTask().execute();
         }
     }
@@ -238,12 +248,13 @@ public class ExamTab extends Fragment {
     }
 
     private void attachButtonListeners(View v) {
-        ((Button) v.findViewById(R.id.btn_newtest)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new GenerateTestTask().execute();
-            }
-        });
+        ((Button) v.findViewById(R.id.btn_newtest)).setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        new GenerateTestTask().execute();
+                    }
+                });
         ((Button) v.findViewById(R.id.btn_listen_exam)).setOnClickListener(
                 new View.OnClickListener() {
                     @Override
@@ -253,14 +264,12 @@ public class ExamTab extends Fragment {
                 });
     }
 
-    private void displayTestQuestion(TestQuestion testQuestion) {
-        Log.d(TAG, "displayTestQuestion invoked, testQuestion = " + testQuestion);
+    private void displayCurrentQuestion() {
+        if (this.currentQuestion == null)
+            throw new IllegalArgumentException("currentQuestion is null");
+        TestQuestion testQuestion = currentQuestion;
 
-        if (testQuestion == null) {
-            Toast.makeText(parentActivity, "Couldn't retrieve test question...",
-                    Toast.LENGTH_LONG).show();
-            return;
-        }
+        Log.d(TAG, "displayCurrentQuestion invoked, testQuestion = " + testQuestion);
 
         // set the question word
         questionView.setText(
@@ -365,5 +374,13 @@ public class ExamTab extends Fragment {
                     currentQuestion.getQuestion().getLang(),
                     parentActivity.getFilesDir()).execute();
         }
+    }
+
+    public TestQuestion getNotificationQuestion() {
+        return notificationQuestion;
+    }
+
+    public void setNotificationQuestion(TestQuestion notificationQuestion) {
+        this.notificationQuestion = notificationQuestion;
     }
 }

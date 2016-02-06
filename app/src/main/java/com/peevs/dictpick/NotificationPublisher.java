@@ -51,12 +51,14 @@ public class NotificationPublisher extends BroadcastReceiver {
                         .setContentTitle("DictPick")
                         .setContentText(notificationContent);
 
-        Intent resultIntent = new Intent(context, ExamActivity.class);
+        //// TODO: 5.2.2016 г. The MainActivity should handle start by intend and open the exam tab
+        Intent resultIntent = new Intent(context, MainActivity.class);
+
         resultIntent.putExtra(QUESTION_FROM_NOTIFICATION, q);
 
         // prepare back stack, so back button leads to home screen
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(ExamActivity.class);
+        stackBuilder.addParentStack(MainActivity.class);
         stackBuilder.addNextIntent(resultIntent);
 
         PendingIntent resultPendingIntent =

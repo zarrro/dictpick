@@ -5,6 +5,8 @@ import android.app.FragmentManager;
 import android.content.Context;
 import android.support.v13.app.FragmentPagerAdapter;
 
+import com.peevs.dictpick.model.TestQuestion;
+
 /**
  * Created by zarrro on 01.01.16.
  */
@@ -13,10 +15,13 @@ public class TabsPagerAddapter extends FragmentPagerAdapter {
     final int PAGE_COUNT = 3;
     private String tabTitles[] = new String[] { "DictTab", "Quiz", "Word Books" };
     private Context context;
+    private TestQuestion questionFromNotification;
 
-    public TabsPagerAddapter(FragmentManager fm, Context context) {
+    public TabsPagerAddapter(FragmentManager fm, Context context,
+                             TestQuestion questionFromNotification) {
         super(fm);
         this.context = context;
+        this.questionFromNotification = questionFromNotification;
     }
 
     @Override
@@ -30,7 +35,9 @@ public class TabsPagerAddapter extends FragmentPagerAdapter {
             case 0:
                 return new DictTab();
             case 1:
-                return new ExamTab();
+                ExamTab et = new ExamTab();
+                et.setNotificationQuestion(questionFromNotification);
+                return et;
             case 2:
                 return new WordsbookTab();
             default:
