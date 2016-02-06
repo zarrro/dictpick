@@ -38,7 +38,8 @@ public class ExamTab extends Fragment {
         private String srcText = null;
 
         /**
-         * Loads all the translations, randomly select question word and wrong testOptions as alternative.
+         * Loads all the translations, randomly select question word and wrong
+         * testOptions as alternative.
          */
         @Override
         protected TestQuestion doInBackground(Void... n) {
@@ -52,8 +53,7 @@ public class ExamTab extends Fragment {
 
         @Override
         protected void onPostExecute(TestQuestion result) {
-            ExamTab.this.currentQuestion = result;
-            ExamTab.this.displayCurrentQuestion();
+            ExamTab.this.displayQuestion(result);
         }
     }
 
@@ -186,16 +186,13 @@ public class ExamTab extends Fragment {
 
     private static final String TAG = "ExamTab";
     private Random rand = new Random(System.currentTimeMillis());
-
     private TestQuestion currentQuestion = null;
     private TestQuestion notificationQuestion = null;
     private TabFragmentHost parentActivity;
-
     private TextView questionView;
     private LinearLayout layout_answers;
     private TextView answerCountStat;
     private TextView answerSuccessRateStat;
-    private boolean hasBeenSeen;
 
     public ExamTab() {
 
@@ -210,7 +207,6 @@ public class ExamTab extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        hasBeenSeen = false;
     }
 
     @Override
@@ -226,8 +222,7 @@ public class ExamTab extends Fragment {
     public void onResume() {
         super.onResume();
         if (notificationQuestion != null) {
-            currentQuestion = notificationQuestion;
-            displayCurrentQuestion();
+            displayQuestion(notificationQuestion);
             notificationQuestion = null;
         }
     }
@@ -235,7 +230,7 @@ public class ExamTab extends Fragment {
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
-        if (isVisibleToUser && currentQuestion == null) {
+        if (isVisibleToUser && currentQuestion == null && notificationQuestion == null) {
             new GenerateTestTask().execute();
         }
     }
@@ -264,18 +259,18 @@ public class ExamTab extends Fragment {
                 });
     }
 
-    private void displayCurrentQuestion() {
-        if (this.currentQuestion == null)
-            throw new IllegalArgumentException("currentQuestion is null");
-        TestQuestion testQuestion = currentQuestion;
+    private void displayQuestion(TestQuestion testQuestion) {
+        if (testQuestion == null)
+            throw new IllegalArgumentException("testQuestion is null");
 
-        Log.d(TAG, "displayCurrentQuestion invoked, testQuestion = " + testQuestion);
+        Log.d(TAG, "displayQuestion invoked, testQuestion = " + testQuestion);
 
         // set the question word
         questionView.setText(
                 testQuestion.getQuestion().getVal());
 
-        this.currentQuestion = testQuestion;
+        currentQuestion = testQuestion;
+
         if (parentActivity.getAutoSayQuestion()) {
             sayCurrentQuestion();
         }
@@ -292,6 +287,7 @@ public class ExamTab extends Fragment {
             layout_answers.addView(createOpenAnswer(testQuestion.getCorrectOptionWordEntry().
                     getText().getVal()));
         }
+
     }
 
     private ViewGroup createOpenAnswer(final String correctAnswer) {
