@@ -10,20 +10,28 @@ import android.widget.TextView;
 import com.peevs.dictpick.R;
 import com.peevs.dictpick.model.TranslationEntry;
 
+import java.util.List;
+
 /**
  * Created by zarrro on 17.01.16.
  */
 public class WordsbookListAdapter extends ArrayAdapter<TranslationEntry> {
 
     private final Context context;
-    private final TranslationEntry[] values;
+    private final List<TranslationEntry> values;
 
+    public WordsbookListAdapter(Context context, List<TranslationEntry> values) {
+        super(context, -1, values);
+        this.context = context;
+        this.values = values;
+    }
+    /*
     public WordsbookListAdapter(Context context, TranslationEntry[] values) {
         super(context, -1, values);
         this.context = context;
         this.values = values;
     }
-
+    */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
@@ -35,12 +43,13 @@ public class WordsbookListAdapter extends ArrayAdapter<TranslationEntry> {
         TextView nativeLang = (TextView) li.findViewById(R.id.native_lang_li);
         TextView nativeText = (TextView) li.findViewById(R.id.native_text_li);
 
-        TranslationEntry te = values[position];
+        TranslationEntry te = values.get(position);
         foreignLang.setText(te.getSrcText().getLang().toString());
         foreignText.setText(te.getSrcText().getVal());
         nativeLang.setText(te.getTargetText().getLang().toString());
         nativeText.setText(te.getTargetText().getVal());
-
         return li;
     }
+
+
 }

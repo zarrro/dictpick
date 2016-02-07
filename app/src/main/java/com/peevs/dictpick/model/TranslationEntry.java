@@ -42,4 +42,20 @@ public class TranslationEntry {
                 ", srcText='" + srcText + '\'' +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TranslationEntry that = (TranslationEntry) o;
+
+        return !(atomicId != null ? !atomicId.equals(that.atomicId) : that.atomicId != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return atomicId != null ? atomicId.hashCode() : 0;
+    }
 }

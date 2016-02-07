@@ -13,6 +13,7 @@ import com.peevs.dictpick.model.TextEntry;
 import com.peevs.dictpick.model.TranslationEntry;
 import com.peevs.dictpick.model.Wordsbook;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -146,6 +147,21 @@ public class ExamDbFacade {
             return examDb.insertOrThrow(ExamDbContract.WordsTable.TABLE_NAME, "null", values);
         } catch (SQLiteConstraintException e) {
             throw new AlreadyExistsException("translation %s -> %s already exists");
+        } finally {
+            if (examDb != null) {
+                examDb.close();
+            }
+        }
+    }
+
+    public void deleteTranslation(long id) {
+        Log.i(TAG, "deleteTranslation: " + id);
+
+        SQLiteDatabase examDb = null;
+        try {
+            examDb = sqliteHelper.getWritableDatabase();
+            examDb.delete(ExamDbContract.WordsTable.TABLE_NAME,
+                    ExamDbContract.WordsTable._ID + " = " + id, null);
         } finally {
             if (examDb != null) {
                 examDb.close();
@@ -322,22 +338,22 @@ public class ExamDbFacade {
 
             StringBuilder whereClauseBuilder = new StringBuilder();
             boolean and = false;
-            if(srcLang != null) {
+            if (srcLang != null) {
                 whereClauseBuilder.append(ExamDbContract.WordsTable.S_LANG);
                 whereClauseBuilder.append(" = ");
                 whereClauseBuilder.append("'" + srcLang.toString().toLowerCase() + "'");
                 and = true;
             }
-            if(and){
+            if (and) {
                 whereClauseBuilder.append(" and ");
             }
-            if(srcLang != null) {
+            if (srcLang != null) {
                 whereClauseBuilder.append(ExamDbContract.WordsTable.T_LANG);
                 whereClauseBuilder.append(" = ");
                 whereClauseBuilder.append("'" + targetLang.toString().toLowerCase() + "'");
                 and = true;
             }
-            if(and){
+            if (and) {
                 whereClauseBuilder.append(" and ");
             }
 
@@ -437,22 +453,22 @@ public class ExamDbFacade {
         return ret;
     }
 
-    public TranslationEntry[] listTranslationEntries(int book_id) {
+    public List<TranslationEntry> listTranslationEntries(int book_id) {
         Log.d(TAG, String.format("listTranslationEntries invoked"));
 
         SQLiteDatabase examDb = null;
         Cursor c = null;
-        TranslationEntry[] result = null;
+        List<TranslationEntry> result = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
             c = queryAllTranslations(null, null, examDb, book_id);
             if (c.getCount() <= 0) {
                 return null;
             }
-            result = new TranslationEntry[c.getCount()];
+            result = new ArrayList<>(c.getCount());
             int i = 0;
-            while(c.moveToNext()) {
-                result[i] = teFromCursor(c);
+            while (c.moveToNext()) {
+                result.add(teFromCursor(c));
                 ++i;
             }
         } finally {
