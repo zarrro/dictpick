@@ -10,15 +10,15 @@ import com.peevs.dictpick.model.TestQuestion;
 /**
  * Created by zarrro on 01.01.16.
  */
-public class TabsPagerAddapter extends FragmentPagerAdapter {
+public class TabsPagerAdapter extends FragmentPagerAdapter {
 
     final int PAGE_COUNT = 3;
     private String tabTitles[] = new String[] { "DictTab", "Quiz", "Word Books" };
     private Context context;
     private TestQuestion questionFromNotification;
 
-    public TabsPagerAddapter(FragmentManager fm, Context context,
-                             TestQuestion questionFromNotification) {
+    public TabsPagerAdapter(FragmentManager fm, Context context,
+                            TestQuestion questionFromNotification) {
         super(fm);
         this.context = context;
         this.questionFromNotification = questionFromNotification;
