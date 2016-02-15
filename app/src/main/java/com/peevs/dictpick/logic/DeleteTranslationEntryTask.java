@@ -1,19 +1,15 @@
 package com.peevs.dictpick.logic;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.AsyncTask;
-import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
-import android.widget.ListView;
 import android.widget.Toast;
 
+import com.peevs.dictpick.ExamDbContract;
 import com.peevs.dictpick.ExamDbFacade;
 import com.peevs.dictpick.ExamDbHelper;
 import com.peevs.dictpick.model.TranslationEntry;
-
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by zarrro on 1.2.2016 г..
@@ -21,30 +17,25 @@ import java.util.List;
 public class DeleteTranslationEntryTask extends AsyncTask<Void, Void, Void> {
 
     private Context context;
-    private ArrayAdapter addapterToBeChanged;
-    private TranslationEntry te;
+    private long teId;
 
-    public DeleteTranslationEntryTask(Context context, TranslationEntry te,
-                                      ArrayAdapter addapterToBeChanged) {
+    public DeleteTranslationEntryTask(Context context, long teId) {
         this.context = context;
-        this.te = te;
-        this.addapterToBeChanged = addapterToBeChanged;
+        this.teId = teId;
     }
 
     @Override
     protected Void doInBackground(Void... params) {
         ExamDbFacade examDbFacade =
                 new ExamDbFacade(new ExamDbHelper(context));
-        examDbFacade.deleteTranslation(te.getId());
+        examDbFacade.deleteTranslation(teId);
         return null;
     }
 
     @Override
     protected void onPostExecute(Void v) {
-       if(addapterToBeChanged != null) {
-           addapterToBeChanged.remove(te);
-           addapterToBeChanged.notifyDataSetChanged();
-       }
-       Toast.makeText(context, "Deleted translation " + te.getId(), Toast.LENGTH_SHORT).show();
+        context.getContentResolver().notifyChange(
+                Uri.parse(ExamDbContract.WordsTable.CONTENT_URI), null);
+       Toast.makeText(context, "Deleted translation " + teId, Toast.LENGTH_SHORT).show();
     }
 }

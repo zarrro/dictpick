@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.peevs.dictpick.ExamDbFacade;
 import com.peevs.dictpick.R;
+import com.peevs.dictpick.logic.DictOnSaveTranslation;
 import com.peevs.dictpick.logic.SaveTranslationEntryTask;
 import com.peevs.dictpick.model.TranslationEntry;
 
@@ -42,10 +43,9 @@ public class DictTranslationsListAdapter extends ArrayAdapter<TranslationEntry> 
             star.setImageResource(R.drawable.ic_star_enabled);
         } else {
             star.setImageResource(R.drawable.ic_star_disabled);
-            li.setOnClickListener(new SaveTranslationEntryTask(context, te));
+            li.setOnClickListener(new SaveTranslationEntryTask(context, te,
+                    new DictOnSaveTranslation()));
         }
         return li;
     }
-
-
 }

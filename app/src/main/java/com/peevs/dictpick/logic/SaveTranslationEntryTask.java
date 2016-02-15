@@ -1,15 +1,13 @@
 package com.peevs.dictpick.logic;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.view.View;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.Toast;
 
+import com.peevs.dictpick.ExamDbContract;
 import com.peevs.dictpick.ExamDbFacade;
 import com.peevs.dictpick.ExamDbHelper;
-import com.peevs.dictpick.R;
 import com.peevs.dictpick.model.TranslationEntry;
 
 /**
@@ -18,63 +16,75 @@ import com.peevs.dictpick.model.TranslationEntry;
 public class SaveTranslationEntryTask extends AsyncTask<Void, Void, Long>
         implements View.OnClickListener {
     private final TranslationEntry te;
+    private final TaskPostExecuteAction<Long> onPostExecuteAction;
+
     private String errorMessage;
-    private Context context;
+    protected Context context;
     private View lastClickedView;
 
-    public SaveTranslationEntryTask(Context context, TranslationEntry te) {
+    public SaveTranslationEntryTask(Context context, TranslationEntry te,
+                                    TaskPostExecuteAction<Long> onPostExecuteAction) {
         this.te = te;
         this.context = context;
+        this.onPostExecuteAction = onPostExecuteAction;
     }
 
     @Override
     protected Long doInBackground(Void... params) {
-        long wordId = ExamDbFacade.ID_NOT_EXISTS;
-
-        // save to DB
         ExamDbFacade examDbFacade =
                 new ExamDbFacade(new ExamDbHelper(context));
-        try {
-            wordId = examDbFacade.saveTranslation(
-                    te.getSrcText().getVal(),
-                    te.getTargetText().getVal(),
-                    te.getSrcText().getLang().toString().toLowerCase(),
-                    te.getTargetText().getLang().toString().toLowerCase());
-            te.setId(wordId);
-        } catch (ExamDbFacade.AlreadyExistsException e) {
-            errorMessage = e.getMessage();
-        }
-        return wordId;
+        // insert new or save existing to DB
+
+        examDbFacade.saveTranslation(te, ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
+
+        context.getContentResolver().notifyChange(
+                Uri.parse(ExamDbContract.WordsTable.CONTENT_URI), null);
+
+        return te.getId();
     }
 
     @Override
     protected void onPostExecute(Long result) {
-        if (result == null || result == -1) {
-            if (errorMessage != null) {
-                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show();
-                errorMessage = null;
-            } else {
-                Toast.makeText(context, "Error on saving...", Toast.LENGTH_SHORT).show();
-            }
-        } else if (result.intValue() == ExamDbFacade.UNIQUE_CONTRAINT_FAILED_ERR_CODE) {
-            Toast.makeText(context, "Translation is already saved.",
-                    Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(context, String.format("Saved translation number %s", result),
-                    Toast.LENGTH_SHORT).show();
-
-            ImageView star = null;
-            if (lastClickedView != null && (star = (ImageView) lastClickedView.findViewById(
-                    R.id.translation_list_item_star)) != null) {
-                star.setImageResource(R.drawable.ic_star_enabled);
-            }
-            lastClickedView.setOnClickListener(null);
-        }
+       if(onPostExecuteAction != null) {
+           onPostExecuteAction.onPostExecute(this, result);
+       }
     }
 
     @Override
     public void onClick(View v) {
         lastClickedView = v;
         execute();
+    }
+
+    public TaskPostExecuteAction<Long> getOnPostExecuteAction() {
+        return onPostExecuteAction;
+    }
+
+    public View getLastClickedView() {
+        return lastClickedView;
+    }
+
+    public void setLastClickedView(View lastClickedView) {
+        this.lastClickedView = lastClickedView;
+    }
+
+    public Context getContext() {
+        return context;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public TranslationEntry getTe() {
+        return te;
     }
 }

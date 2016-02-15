@@ -6,11 +6,10 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 
 import android.view.Menu;
-import android.view.View;
 import android.widget.Toolbar;
 
 import com.peevs.dictpick.model.TestQuestion;
-import com.peevs.dictpick.view.TabsPagerAddapter;
+import com.peevs.dictpick.view.TabsPagerAdapter;
 
 public class MainActivity extends TabFragmentHost {
 
@@ -29,7 +28,7 @@ public class MainActivity extends TabFragmentHost {
         }
         // Get the ViewPager and set it's PagerAdapter so that it can display items
         ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
-        viewPager.setAdapter(new TabsPagerAddapter(getFragmentManager(), this, question));
+        viewPager.setAdapter(new TabsPagerAdapter(getFragmentManager(), this, question));
 
         if(question != null) {
             // if the activity is started with question from a notification start on the ExamTab

@@ -20,6 +20,8 @@
         </activity>
         <activity android:name=".settings.SettingsActivity"
             android:label="Settings" />
+        <activity android:name=".view.TranslationEntryActivity"
+            android:label="Translation"/>
         <receiver android:name=".NotificationPublisher" />
     </application>
     

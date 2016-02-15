@@ -6,28 +6,20 @@ import com.peevs.dictpick.Language;
  * Created by zarrro on 28.11.15.
  */
 public class Text {
+    public final static String SEP = "::";
     private final Language lang;
-    private final String val;
 
     public Text(String val, Language lang) {
         this.val = val;
         this.lang = lang;
     }
 
-    public Language getLang() {
-        return lang;
-    }
+    private String val;
 
     public String getVal() {
-        return val;
-    }
-
-    @Override
-    public String toString() {
-        return "Text{" +
-                "lang=" + lang +
-                ", val='" + val + '\'' +
-                '}';
+        synchronized (this) {
+            return val;
+        }
     }
 
     @Override
@@ -48,4 +40,24 @@ public class Text {
         result = 31 * result + val.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return getVal() + SEP + getLang();
+    }
+
+    public static Text strToText(String... s) {
+        return new Text(s[0], Language.valueOf(s[1]));
+    }
+
+    public void setVal(String val) {
+        synchronized (this) {
+            this.val = val;
+        }
+    }
+
+    public Language getLang() {
+        return lang;
+    }
+
 }

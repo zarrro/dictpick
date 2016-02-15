@@ -25,13 +25,7 @@ public class WordsbookListAdapter extends ArrayAdapter<TranslationEntry> {
         this.context = context;
         this.values = values;
     }
-    /*
-    public WordsbookListAdapter(Context context, TranslationEntry[] values) {
-        super(context, -1, values);
-        this.context = context;
-        this.values = values;
-    }
-    */
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
@@ -50,6 +44,4 @@ public class WordsbookListAdapter extends ArrayAdapter<TranslationEntry> {
         nativeText.setText(te.getTargetText().getVal());
         return li;
     }
-
-
 }

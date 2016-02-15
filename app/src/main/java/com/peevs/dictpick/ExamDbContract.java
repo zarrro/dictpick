@@ -23,7 +23,6 @@ public final class ExamDbContract {
         public static final String RATING = "rating";
         public static final String TESTORDER = "tesorder";
         public static final String BOOKID = "book_id";
-
         public static final String SQL_CREATE =
                 "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " (" +
                         _ID + " INTEGER PRIMARY KEY," +
@@ -35,12 +34,13 @@ public final class ExamDbContract {
                         TESTORDER + INT_TYPE + COMMA_SEP +
                         " UNIQUE ( " + S_TEXT + COMMA_SEP + T_TEXT + " ))";
 
-
         public static final String SQL_DELETE =
                 "DROP TABLE IF EXISTS " + TABLE_NAME;
 
         public static final int DEFAULT_BOOK_ID = 1;
 
+        // used as identifier of the content for usage in CursorLoader
+        public static final String CONTENT_URI = "content://examdb." + TABLE_NAME;
     }
 
     public static final class AnswerStats implements BaseColumns {

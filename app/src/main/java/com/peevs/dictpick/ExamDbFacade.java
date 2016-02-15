@@ -11,7 +11,7 @@ import com.peevs.dictpick.model.TestQuestion;
 import com.peevs.dictpick.model.Text;
 import com.peevs.dictpick.model.TextEntry;
 import com.peevs.dictpick.model.TranslationEntry;
-import com.peevs.dictpick.model.Wordsbook;
+import com.peevs.dictpick.model.Wordbook;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -118,7 +118,7 @@ public class ExamDbFacade {
         Cursor c = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
-            c = queryAllTranslations(srcLang, targetLang, examDb, book_id);
+            c = initAllTranslationsCursor(srcLang, targetLang, examDb, book_id);
             if (c.getCount() <= 0) {
                 return null;
             }
@@ -129,24 +129,37 @@ public class ExamDbFacade {
         }
     }
 
-    public long saveTranslation(String sourceText, String targetText, String sourceLang,
-                                String targetLang) throws AlreadyExistsException {
+    /**
+     * Persists the given translation entry to the DB.
+     * If the entry doesn't have id, it is inserted as new row and its id is initialized.
+     * If id was set, the row with that id is updated.
+     *
+     * @param te - TranslationEntry instance to be persisted.
+     */
+    public void saveTranslation(TranslationEntry te, int bookid) {
 
-        Log.i(TAG, String.format("saveTranslation - sourceText %s, targetText %s, sourceLang %s," +
-                "nativeLang %s", sourceText, targetText, sourceLang, targetLang));
+        Log.i(TAG, "saveTranslation - translationEntry: " + te.toString());
 
         SQLiteDatabase examDb = null;
         try {
             examDb = sqliteHelper.getWritableDatabase();
 
             ContentValues values = new ContentValues();
-            values.put(ExamDbContract.WordsTable.S_TEXT, sourceText);
-            values.put(ExamDbContract.WordsTable.T_TEXT, targetText);
-            values.put(ExamDbContract.WordsTable.S_LANG, sourceLang);
-            values.put(ExamDbContract.WordsTable.T_LANG, targetLang);
-            return examDb.insertOrThrow(ExamDbContract.WordsTable.TABLE_NAME, "null", values);
+            values.put(ExamDbContract.WordsTable.S_TEXT, te.getSrcText().getVal());
+            values.put(ExamDbContract.WordsTable.T_TEXT, te.getTargetText().getVal());
+            values.put(ExamDbContract.WordsTable.S_LANG, te.getSrcText().getLang().toString());
+            values.put(ExamDbContract.WordsTable.T_LANG, te.getTargetText().getLang().toString());
+            values.put(ExamDbContract.WordsTable.BOOKID, bookid);
+            if (te.getId() <= 0) {
+                te.setId(examDb.insertOrThrow(ExamDbContract.WordsTable.TABLE_NAME, "null", values));
+                Log.i(TAG, "added new translation " + te.getId());
+            } else {
+                examDb.update(ExamDbContract.WordsTable.TABLE_NAME, values,
+                        ExamDbContract.WordsTable._ID + " = " + te.getId(), null);
+                Log.i(TAG, "updated existing translation " + te.getId());
+            }
         } catch (SQLiteConstraintException e) {
-            throw new AlreadyExistsException("translation %s -> %s already exists");
+            throw new IllegalStateException("translation %s -> %s already exists");
         } finally {
             if (examDb != null) {
                 examDb.close();
@@ -229,7 +242,7 @@ public class ExamDbFacade {
      * @param translations - list of the translations of the source text
      * @param srcLang      - the language of the srcText
      * @param targetLang   - the language of the targetLang
-     * @return - List of TranslationEntry elements, for the translation which exists in the DB.
+     * @return - List of TranslationEntryFragment elements, for the translation which exists in the DB.
      */
     public Map<String, Integer> filterExisting(String srcText, List<String> translations,
                                                Language srcLang, Language targetLang) {
@@ -322,8 +335,8 @@ public class ExamDbFacade {
         }
     }
 
-    private Cursor queryAllTranslations(Language srcLang, Language targetLang,
-                                        SQLiteDatabase examDb, int book_id) {
+    private Cursor initAllTranslationsCursor(Language srcLang, Language targetLang,
+                                             SQLiteDatabase examDb, int book_id) {
         Cursor c = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
@@ -404,7 +417,7 @@ public class ExamDbFacade {
         int answersColumn = inverse ? 0 : 1;
 
         c.moveToPosition(questionIndex);
-        TestQuestion testQuestion = new TestQuestion(teFromCursor(c));
+        TestQuestion testQuestion = new TestQuestion(TranslationEntry.fromCursor(c));
         testQuestion.setInverse(inverse);
 
         Language optionLanguge = !inverse ? targetLang : srcLang;
@@ -421,17 +434,7 @@ public class ExamDbFacade {
         return testQuestion;
     }
 
-    private TranslationEntry teFromCursor(Cursor c) {
-        final int stCol = 0;
-        final int ttCol = 1;
-        final int idCol = 2;
-        final int slCol = 3;
-        final int tlCol = 4;
 
-        Text st = new Text(c.getString(stCol), Language.val(c.getString(slCol)));
-        Text tt = new Text(c.getString(ttCol), Language.val(c.getString(tlCol)));
-        return new TranslationEntry(c.getLong(idCol), st, tt);
-    }
 
     private TextEntry createOptionTextEntry(Cursor c, int row, int textColumn, Language lang) {
         c.moveToPosition(row);
@@ -439,15 +442,15 @@ public class ExamDbFacade {
         return new TextEntry(new Text(c.getString(textColumn), lang), c.getInt(2));
     }
 
-    public Wordsbook[] listAllWordsbooks() {
-        Log.d(TAG, String.format("listAllWordsbooks invoked"));
+    public Wordbook[] listAllWordbooks() {
+        Log.d(TAG, String.format("listAllWordbooks invoked"));
 
-        Cursor c = listAllWordsbooksCursor();
+        Cursor c = initAllWordbooksCursor();
         int i = 0;
-        Wordsbook[] ret = new Wordsbook[c.getCount()];
+        Wordbook[] ret = new Wordbook[c.getCount()];
         if (c.moveToFirst())
             do {
-                ret[i] = new Wordsbook(c.getInt(0), c.getString(1));
+                ret[i] = new Wordbook(c.getInt(0), c.getString(1));
                 i++;
             } while (c.moveToNext());
         return ret;
@@ -461,14 +464,14 @@ public class ExamDbFacade {
         List<TranslationEntry> result = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
-            c = queryAllTranslations(null, null, examDb, book_id);
+            c = initAllTranslationsCursor(null, null, examDb, book_id);
             if (c.getCount() <= 0) {
                 return null;
             }
             result = new ArrayList<>(c.getCount());
             int i = 0;
             while (c.moveToNext()) {
-                result.add(teFromCursor(c));
+                result.add(TranslationEntry.fromCursor(c));
                 ++i;
             }
         } finally {
@@ -479,7 +482,11 @@ public class ExamDbFacade {
         return result;
     }
 
-    private Cursor listAllWordsbooksCursor() {
+    public Cursor getCursorForTranslations(int book_id) {
+        return initAllTranslationsCursor(null, null, sqliteHelper.getReadableDatabase(), book_id);
+    }
+
+    private Cursor initAllWordbooksCursor() {
         SQLiteDatabase examDb = null;
         Cursor c = null;
         examDb = sqliteHelper.getReadableDatabase();
@@ -502,9 +509,9 @@ public class ExamDbFacade {
             );
 
             if (c == null || c.getCount() == 0) {
-                Log.d(TAG, "listAllWordsbooksCursor - no wordbooks found");
+                Log.d(TAG, "initAllWordbooksCursor - no wordbooks found");
             } else {
-                Log.d(TAG, "listAllWordsbooksCursor - " + c.getCount() + " wordbooks retrieved");
+                Log.d(TAG, "initAllWordbooksCursor - " + c.getCount() + " wordbooks retrieved");
             }
         } finally {
             if (examDb != null) {

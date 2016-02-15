@@ -31,7 +31,7 @@ public class TestQuestion extends Question implements Parcelable {
         String[] data = new String[PARCEL_DATA_SIZE];
         in.readStringArray(data);
         int index = 0;
-        question = translationEntryFromString(data[index++]);
+        question = TranslationEntry.fromString(data[index++]);
         correctOptionIndex = Integer.valueOf(data[index++]);
         inverse = Boolean.valueOf(data[index++]);
         options = new TextEntry[WRONG_OPTIONS_COUNT + 1];
@@ -64,7 +64,7 @@ public class TestQuestion extends Question implements Parcelable {
         // index 3..end - the word entries of the answer options
         String[] testQuestionString = new String[PARCEL_DATA_SIZE];
         int index = 0;
-        testQuestionString[index++] = translationEntryToString(question);
+        testQuestionString[index++] = question.toString();
         testQuestionString[index++] = String.valueOf(correctOptionIndex);
         testQuestionString[index++] = Boolean.toString(inverse);
         for (int i = 0; i < options.length; i++) {
