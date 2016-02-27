@@ -44,7 +44,7 @@ public class NotificationPublisher extends BroadcastReceiver {
     }
 
     private Notification getNotification(Context context, TestQuestion q) {
-        String notificationContent = q.getQuestion().getVal() + " ?";
+        String notificationContent = q.getQuestionText().getVal() + " ?";
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context).setSmallIcon(
                         R.drawable.notify_01)

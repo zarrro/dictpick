@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.peevs.dictpick.model.Question;
 import com.peevs.dictpick.model.TestQuestion;
 import com.peevs.dictpick.model.Text;
 import com.peevs.dictpick.model.TextEntry;
@@ -36,46 +37,6 @@ public class ExamDbFacade {
 
         public AlreadyExistsException(String msg) {
             super(msg);
-        }
-    }
-
-    public static class AnswerStatsEntry {
-
-        private long questionWordId;
-        private long wrongAnswerWordId;
-        private Date timestamp;
-
-        public void setTimestamp(Date timestamp) {
-            this.timestamp = timestamp;
-        }
-
-        public long getQuestionWordId() {
-            return questionWordId;
-        }
-
-        public void setQuestionWordId(long questionWordId) {
-            this.questionWordId = questionWordId;
-        }
-
-        public long getWrongAnswerWordId() {
-            return wrongAnswerWordId;
-        }
-
-        public void setWrongAnswerWordId(long wrongAnswerWordId) {
-            this.wrongAnswerWordId = wrongAnswerWordId;
-        }
-
-        public Date getTimestamp() {
-            return timestamp;
-        }
-
-        @Override
-        public String toString() {
-            return "AnswerStatsEntry{" +
-                    "questionWordId=" + questionWordId +
-                    ", wrongAnswerWordId=" + wrongAnswerWordId +
-                    ", timestamp=" + timestamp.toString() +
-                    '}';
         }
     }
 
@@ -118,7 +79,7 @@ public class ExamDbFacade {
         Cursor c = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
-            c = initAllTranslationsCursor(srcLang, targetLang, examDb, book_id);
+            c = initTranslationsCursor(srcLang, targetLang, examDb, book_id, null, null);
             if (c.getCount() <= 0) {
                 return null;
             }
@@ -149,6 +110,7 @@ public class ExamDbFacade {
             values.put(ExamDbContract.WordsTable.T_TEXT, te.getTargetText().getVal());
             values.put(ExamDbContract.WordsTable.S_LANG, te.getSrcText().getLang().toString());
             values.put(ExamDbContract.WordsTable.T_LANG, te.getTargetText().getLang().toString());
+            values.put(ExamDbContract.WordsTable.RATING, te.getRating());
             values.put(ExamDbContract.WordsTable.BOOKID, bookid);
             if (te.getId() <= 0) {
                 te.setId(examDb.insertOrThrow(ExamDbContract.WordsTable.TABLE_NAME, "null", values));
@@ -182,16 +144,28 @@ public class ExamDbFacade {
         }
     }
 
-    public long saveAnswer(AnswerStatsEntry statsInput) {
-        Log.i(TAG, "saveAnswer: " + statsInput.toString());
+    public long saveAnswer(long questionWordId, Question.Type type, Object wrongAnswer) {
+        Log.i(TAG, "saveAnswer: ");
+
+        Integer wrongWordId = null;
+        String wrongText = null;
+        if(wrongAnswer != null) {
+            if (wrongAnswer instanceof Integer) {
+                wrongWordId = (Integer) wrongAnswer;
+            } else {
+                wrongText = wrongAnswer.toString();
+            }
+        }
 
         SQLiteDatabase examDb = null;
         try {
             examDb = sqliteHelper.getWritableDatabase();
             ContentValues values = new ContentValues();
-            values.put(ExamDbContract.AnswerStats.QUESTION_WORD_ID, statsInput.getQuestionWordId());
-            values.put(ExamDbContract.AnswerStats.WRONG_ANSWER_WORD_ID, statsInput.getWrongAnswerWordId());
-            values.put(ExamDbContract.AnswerStats.TIME_STAMP, statsInput.getTimestamp().toString());
+            values.put(ExamDbContract.AnswerStats.QUESTION_WORD_ID, questionWordId);
+            values.put(ExamDbContract.AnswerStats.QUESTION_TYPE, type.toString());
+            values.put(ExamDbContract.AnswerStats.WRONG_ANSWER_WORD_ID, wrongWordId);
+            values.put(ExamDbContract.AnswerStats.WRONG_ANSWER_TEXT, wrongText);
+            values.put(ExamDbContract.AnswerStats.TIME_STAMP, new Date().toString());
             return examDb.insert(ExamDbContract.AnswerStats.TABLE_NAME, "null", values);
         } finally {
             if (examDb != null) {
@@ -335,8 +309,13 @@ public class ExamDbFacade {
         }
     }
 
-    private Cursor initAllTranslationsCursor(Language srcLang, Language targetLang,
-                                             SQLiteDatabase examDb, int book_id) {
+    private Cursor initTranslationsCursor(Language srcLang, Language targetLang,
+                                          SQLiteDatabase examDb, int book_id, String orderBy,
+                                          Integer limit) {
+        Log.d(TAG, String.format(
+                "initTranslationsCursor srcLang = %s, targetLang = %s, book_id = %s," +
+                        " orderBy = %s, limit = %s", srcLang, targetLang, book_id, orderBy, limit));
+
         Cursor c = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
@@ -346,7 +325,8 @@ public class ExamDbFacade {
                     ExamDbContract.WordsTable.T_TEXT,
                     ExamDbContract.WordsTable._ID,
                     ExamDbContract.WordsTable.S_LANG,
-                    ExamDbContract.WordsTable.T_LANG
+                    ExamDbContract.WordsTable.T_LANG,
+                    ExamDbContract.WordsTable.RATING
             };
 
             StringBuilder whereClauseBuilder = new StringBuilder();
@@ -381,7 +361,8 @@ public class ExamDbFacade {
                     null,                   // The values for the WHERE clause
                     null,                   // don't group the rows
                     null,                   // don't filter by row groups
-                    null                    // The sort order
+                    orderBy,                // order by column asc, desc
+                    limit != null ? String.valueOf(limit) : null  // limit 10
             );
 
             if (c == null || c.getCount() == 0) {
@@ -434,8 +415,6 @@ public class ExamDbFacade {
         return testQuestion;
     }
 
-
-
     private TextEntry createOptionTextEntry(Cursor c, int row, int textColumn, Language lang) {
         c.moveToPosition(row);
         // column 2 - _id
@@ -456,15 +435,16 @@ public class ExamDbFacade {
         return ret;
     }
 
-    public List<TranslationEntry> listTranslationEntries(int book_id) {
-        Log.d(TAG, String.format("listTranslationEntries invoked"));
+    public List<TranslationEntry> queryTranslations(Language sl, Language tl, int book_id,
+                                                    String orderBy, Integer limit) {
+        Log.d(TAG, "queryTranslations invoked");
 
         SQLiteDatabase examDb = null;
         Cursor c = null;
         List<TranslationEntry> result = null;
         try {
             examDb = sqliteHelper.getReadableDatabase();
-            c = initAllTranslationsCursor(null, null, examDb, book_id);
+            c = initTranslationsCursor(sl, tl, examDb, book_id, orderBy, limit);
             if (c.getCount() <= 0) {
                 return null;
             }
@@ -478,12 +458,12 @@ public class ExamDbFacade {
             if (c != null) c.close();
             if (examDb != null) examDb.close();
         }
-
         return result;
     }
 
-    public Cursor getCursorForTranslations(int book_id) {
-        return initAllTranslationsCursor(null, null, sqliteHelper.getReadableDatabase(), book_id);
+    public Cursor queryTranslationsCursor(int book_id, String orderBy, Integer limit) {
+        return initTranslationsCursor(null, null, sqliteHelper.getReadableDatabase(), book_id,
+                orderBy, limit);
     }
 
     private Cursor initAllWordbooksCursor() {

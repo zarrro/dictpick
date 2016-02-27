@@ -5,6 +5,7 @@ import android.database.Cursor;
 import com.peevs.dictpick.ExamDbContract;
 import com.peevs.dictpick.Language;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -13,11 +14,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TranslationEntry {
 
     private final AtomicLong atomicId;
+    private final AtomicInteger rating;
     private final Text srcText;
+
     private final Text targetText;
 
     public TranslationEntry(long id, Text srcText, Text targetText) {
+        this(id, srcText, targetText, 0);
+    }
+
+    public TranslationEntry(long id, Text srcText, Text targetText, int rating) {
         this.atomicId = new AtomicLong(id);
+        this.rating = new AtomicInteger(rating);
         this.srcText = srcText;
         this.targetText = targetText;
     }
@@ -61,12 +69,12 @@ public class TranslationEntry {
         return new TranslationEntry(
                 Long.valueOf(parts[0]),
                 Text.strToText(parts[1], parts[2]),
-                Text.strToText(parts[3], parts[4]));
+                Text.strToText(parts[3], parts[4]), Integer.valueOf(parts[5]));
     }
 
     public String toString() {
         return getId() + Text.SEP + srcText.toString() + Text.SEP +
-                targetText.toString();
+                targetText.toString() + Text.SEP + rating;
     }
 
     public static TranslationEntry fromCursor(Cursor cursor) {
@@ -78,11 +86,21 @@ public class TranslationEntry {
                 ExamDbContract.WordsTable.T_LANG));
         String targetText = cursor.getString(cursor.getColumnIndexOrThrow(
                 ExamDbContract.WordsTable.T_TEXT));
+        int rating = cursor.getInt(cursor.getColumnIndexOrThrow(
+                ExamDbContract.WordsTable.RATING));
         long id = cursor.getLong(cursor.getColumnIndexOrThrow(
                 ExamDbContract.WordsTable._ID));
 
         Text st = new Text(srcText, Language.val(srcLang));
         Text tt = new Text(targetText, Language.val(targetLang));
-        return new TranslationEntry(id, st, tt);
+        return new TranslationEntry(id, st, tt, rating);
+    }
+
+    public int getRating() {
+        return rating.get();
+    }
+
+    public void setRating(int rating) {
+        this.rating.set(rating);
     }
 }

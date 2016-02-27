@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,6 +23,9 @@ import com.peevs.dictpick.ExamDbHelper;
 import com.peevs.dictpick.R;
 import com.peevs.dictpick.TabFragmentHost;
 import com.peevs.dictpick.TextToSpeechTask;
+import com.peevs.dictpick.logic.QuestionFactory;
+import com.peevs.dictpick.model.OpenQuestion;
+import com.peevs.dictpick.model.Question;
 import com.peevs.dictpick.model.TestQuestion;
 import com.peevs.dictpick.model.TextEntry;
 
@@ -29,10 +33,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ExamTab extends Fragment {
 
-    class GenerateTestTask extends AsyncTask<Void, Void, TestQuestion> {
+    class GenerateTestTask extends AsyncTask<Void, Void, Question> {
 
         private static final String TAG = "GenerateTestTask";
         private String srcText = null;
@@ -42,17 +47,16 @@ public class ExamTab extends Fragment {
          * testOptions as alternative.
          */
         @Override
-        protected TestQuestion doInBackground(Void... n) {
+        protected Question doInBackground(Void... n) {
             Log.d(TAG, "doInBackground started...");
             ExamDbFacade examDb = new ExamDbFacade(new ExamDbHelper(parentActivity));
-            return examDb.getRandomTestQuestion(parentActivity.getForeignLanguage(),
-                    parentActivity.getNativeLanguage(),
-                    TestQuestion.WRONG_OPTIONS_COUNT,
-                    ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
+            QuestionFactory qf = new QuestionFactory(examDb, parentActivity.getForeignLanguage(),
+                    parentActivity.getNativeLanguage());
+            return qf.getTestQuestionByRating();
         }
 
         @Override
-        protected void onPostExecute(TestQuestion result) {
+        protected void onPostExecute(Question result) {
             ExamTab.this.displayQuestion(result);
         }
     }
@@ -61,14 +65,22 @@ public class ExamTab extends Fragment {
      * Insert new answerStat entry and return the new statistics as a result.
      */
     class UpdateStatsTask extends
-            AsyncTask<ExamDbFacade.AnswerStatsEntry, Void, ExamDbFacade.AnswerStats> {
+            AsyncTask<Question, Void, ExamDbFacade.AnswerStats> {
         @Override
-        protected ExamDbFacade.AnswerStats doInBackground(ExamDbFacade.AnswerStatsEntry... params) {
+        protected ExamDbFacade.AnswerStats doInBackground(Question... params) {
             if (params.length != 1)
                 throw new IllegalArgumentException();
 
+            Question q = params[0];
+
             ExamDbFacade examDb = new ExamDbFacade(new ExamDbHelper(parentActivity));
-            examDb.saveAnswer(params[0]);
+            examDb.saveAnswer(q.getQuestion().getId(), q.getType(), q.getLastWrongAnswer());
+            examDb.saveTranslation(currentQuestion.getQuestion(),
+                    ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
+
+            // translation rating might have changes, so we notify the adapter for the wordsbook tab
+            parentActivity.getContentResolver().notifyChange(
+                    Uri.parse(ExamDbContract.WordsTable.CONTENT_URI), null);
             return examDb.queryAnswerStats();
         }
 
@@ -87,60 +99,37 @@ public class ExamTab extends Fragment {
 
         private static final int TEST_OPTION_TEXT_SIZE = 16;
 
-        private abstract class OptionMarker implements View.OnClickListener {
-            TextView[] optionViews;
-            int correctOptionIndex;
-            long questionWordId;
+        private class AnswerHandler implements View.OnClickListener {
+            final Integer answerIndex;
+            final AtomicBoolean answered;
+            TestQuestion q;
 
-            void disableAnswersClick() {
-                for (TextView tv : optionViews) {
-                    tv.setOnClickListener(null);
-                    tv.setClickable(false);
+            private AnswerHandler(Integer answerIndex, TestQuestion q, AtomicBoolean answered) {
+                this.answerIndex = answerIndex;
+                this.answered = answered;
+                this.q = q;
+            }
+
+            @Override
+            public void onClick(View v) {
+                if (answered.compareAndSet(false, true)) {
+                    if (q.checkAnswer(answerIndex)) {
+                        v.setBackgroundColor(Color.GREEN);
+                    } else {
+                        v.setBackgroundColor(Color.RED);
+                    }
+                    updateStats(q);
                 }
             }
-
-            void markCorrectOption(View v) {
-                v.setBackgroundColor(Color.GREEN);
-            }
-
-            void markWrongOption(View v) {
-                v.setBackgroundColor(Color.RED);
-            }
         }
 
-        private class Correct extends OptionMarker {
-
-            Correct(TextView[] optionViews, long questionWordId) {
-                this.questionWordId = questionWordId;
-                this.optionViews = optionViews;
+        AnswerHandler[] createAnswerHandlers(TestQuestion q) {
+            AnswerHandler[] result = new AnswerHandler[q.getOptions().length];
+            AtomicBoolean answeredFlag = new AtomicBoolean(false);
+            for (int i = 0; i < result.length; ++i) {
+                result[i] = new AnswerHandler(i, q, answeredFlag);
             }
-
-            @Override
-            public void onClick(View v) {
-                markCorrectOption(v);
-                disableAnswersClick();
-                ExamTab.this.updateStats(questionWordId, -1);
-            }
-        }
-
-        private class Wrong extends OptionMarker {
-            private long wrongAnswerWordId;
-
-            Wrong(TextView[] optionViews, long questionWordId, long wrongAnswerWordId,
-                  int correctOptionIndex) {
-                this.questionWordId = questionWordId;
-                this.optionViews = optionViews;
-                this.correctOptionIndex = correctOptionIndex;
-                this.wrongAnswerWordId = wrongAnswerWordId;
-            }
-
-            @Override
-            public void onClick(View v) {
-                markWrongOption(v);
-                markCorrectOption(optionViews[correctOptionIndex]);
-                disableAnswersClick();
-                updateStats(questionWordId, wrongAnswerWordId);
-            }
+            return result;
         }
 
         private TextView wordEntryToOptionView(TextEntry entry) {
@@ -150,43 +139,23 @@ public class ExamTab extends Fragment {
             return result;
         }
 
-        private void setCorrectOptionView(TextView[] optionViews, int correctOptionIndex,
-                                          TestQuestion q) {
-            TextView correctAnswer = wordEntryToOptionView(q.getCorrectOptionWordEntry());
-            correctAnswer.setOnClickListener(new Correct(optionViews,
-                    q.getCorrectOptionWordEntry().getId()));
-            optionViews[correctOptionIndex] = correctAnswer;
-        }
-
-        private void setWrongOptionView(TextView[] optionViews, int wrongOptionIndex,
-                                        TestQuestion q) {
-            TextView result = wordEntryToOptionView(q.getOptions()[wrongOptionIndex]);
-            result.setOnClickListener(new Wrong(optionViews, q.getCorrectOptionWordEntry().getId(),
-                    q.getOptions()[wrongOptionIndex].getId(),
-                    q.getCorrectOptionIndex()));
-            optionViews[wrongOptionIndex] = result;
-        }
-
         public List<TextView> createAnswerViews(TestQuestion q) {
 
-            TextView[] optionViews = new TextView[q.getOptions().length];
+            TextView[] answerViews = new TextView[q.getOptions().length];
+            AnswerHandler[] answerHandlers = createAnswerHandlers(q);
 
-            setCorrectOptionView(optionViews, q.getCorrectOptionIndex(), q);
-
-            for (int i = 0; i < q.getCorrectOptionIndex(); ++i) {
-                setWrongOptionView(optionViews, i, q);
-            }
-            for (int i = q.getCorrectOptionIndex() + 1; i < optionViews.length; ++i) {
-                setWrongOptionView(optionViews, i, q);
+            for(int i = 0; i < answerViews.length; ++i) {
+                answerViews[i] = wordEntryToOptionView(q.getOptions()[i]);
+                answerViews[i].setOnClickListener(answerHandlers[i]);
             }
 
-            return Arrays.asList(optionViews);
+            return Arrays.asList(answerViews);
         }
     }
 
     private static final String TAG = "ExamTab";
     private Random rand = new Random(System.currentTimeMillis());
-    private TestQuestion currentQuestion = null;
+    private Question currentQuestion = null;
     private TestQuestion notificationQuestion = null;
     private TabFragmentHost parentActivity;
     private TextView questionView;
@@ -259,17 +228,17 @@ public class ExamTab extends Fragment {
                 });
     }
 
-    private void displayQuestion(TestQuestion testQuestion) {
-        if (testQuestion == null)
-            throw new IllegalArgumentException("testQuestion is null");
+    private void displayQuestion(Question question) {
+        if (question == null)
+            throw new IllegalArgumentException("question is null");
 
-        Log.d(TAG, "displayQuestion invoked, testQuestion = " + testQuestion);
+        Log.d(TAG, "displayQuestion invoked, question = " + question);
 
         // set the question word
         questionView.setText(
-                testQuestion.getQuestion().getVal());
+                question.getQuestionText().getVal());
 
-        currentQuestion = testQuestion;
+        currentQuestion = question;
 
         if (parentActivity.getAutoSayQuestion()) {
             sayCurrentQuestion();
@@ -277,17 +246,17 @@ public class ExamTab extends Fragment {
 
         layout_answers.removeAllViews(); // clear the testOptions from previous question
 
-        boolean test = Math.random() > 0.5;
-        if (test) {
+        if(currentQuestion instanceof TestQuestion) {
             TestOptionViewsFactory tvFactory = new TestOptionViewsFactory();
-            for (TextView optionView : tvFactory.createAnswerViews(testQuestion)) {
+            for (TextView optionView : tvFactory.createAnswerViews((TestQuestion) question)) {
                 layout_answers.addView(optionView);
             }
-        } else {
-            layout_answers.addView(createOpenAnswer(testQuestion.getCorrectOptionWordEntry().
+        } else if (currentQuestion instanceof OpenQuestion) {
+            layout_answers.addView(createOpenAnswer(question.getCorrectAnswer().
                     getText().getVal()));
+        } else {
+            throw new IllegalStateException("not supported question instance type");
         }
-
     }
 
     private ViewGroup createOpenAnswer(final String correctAnswer) {
@@ -354,20 +323,16 @@ public class ExamTab extends Fragment {
         answerSuccessRateStat.setText(String.format("Success Rate: %.2f", successRate * 100) + "%");
     }
 
-    private void updateStats(long questionWordId, long wrongAnswerId) {
-        ExamDbFacade.AnswerStatsEntry statsIn = new ExamDbFacade.AnswerStatsEntry();
-        statsIn.setQuestionWordId(questionWordId);
-        statsIn.setWrongAnswerWordId(wrongAnswerId);
-        statsIn.setTimestamp(new Date());
-        (new UpdateStatsTask()).execute(statsIn);
+    private void updateStats(Question q) {
+        (new UpdateStatsTask()).execute(q);
     }
 
     public void sayCurrentQuestion() {
         //TODO: problem with playing BG, so play only foreignLang (EN)
         if (currentQuestion != null &&
-                parentActivity.getForeignLanguage() == currentQuestion.getQuestion().getLang()) {
-            new TextToSpeechTask(currentQuestion.getQuestion().getVal(),
-                    currentQuestion.getQuestion().getLang(),
+                parentActivity.getForeignLanguage() == currentQuestion.getQuestionText().getLang()) {
+            new TextToSpeechTask(currentQuestion.getQuestionText().getVal(),
+                    currentQuestion.getQuestionText().getLang(),
                     parentActivity.getFilesDir()).execute();
         }
     }

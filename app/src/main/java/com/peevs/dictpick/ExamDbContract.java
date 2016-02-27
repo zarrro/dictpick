@@ -47,7 +47,9 @@ public final class ExamDbContract {
 
         public static final String TABLE_NAME = "answer_stats";
         public static final String QUESTION_WORD_ID = "question_word_id";
+        public static final String QUESTION_TYPE = "question_type";
         public static final String WRONG_ANSWER_WORD_ID = "wrong_answer_word_id";
+        public static final String WRONG_ANSWER_TEXT = "wrong_answer_text";
         public static final String TIME_STAMP = "time_stamp";
 
         public static final String SQL_CREATE =

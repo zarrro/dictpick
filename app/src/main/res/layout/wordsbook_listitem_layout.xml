@@ -14,14 +14,14 @@
             android:layout_height="wrap_content"
             android:id="@+id/foreign_lang_li"
             android:layout_marginLeft="5pt"
-            ></TextView>
+            android:text="foreign lang"/>
         <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:id="@+id/foreign_text_li"
             android:layout_toRightOf="@+id/foreign_lang_li"
             android:layout_marginLeft="5pt"
-            ></TextView>
+            android:text="foreign text"/>
     </RelativeLayout>
     <RelativeLayout
         android:orientation="horizontal"
@@ -32,14 +32,22 @@
             android:layout_height="wrap_content"
             android:id="@+id/native_lang_li"
             android:layout_marginLeft="5pt"
-            ></TextView>
+            android:text="bg" />
         <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:id="@+id/native_text_li"
             android:layout_marginLeft="5pt"
             android:layout_toRightOf="@+id/native_lang_li"
-            ></TextView>
+            android:text="test" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/learned_rating"
+            android:layout_marginLeft="5pt"
+            android:text="234"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true" />
     </RelativeLayout>
 
 </LinearLayout>

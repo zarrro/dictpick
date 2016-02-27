@@ -115,17 +115,6 @@ public class WordsbookTab extends ListFragment implements LoaderManager.LoaderCa
             startActivity(intent);
         }
     }
-/*
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == WORD_DETAILS_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            ExamDbFacade examDb = new ExamDbFacade(new ExamDbHelper(parentActivity));
-            entries = examDb.listTranslationEntries(ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
-            setListAdapter(new WordsbookListAdapter(getActivity(), entries));
-        }
-    }
-*/
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -138,8 +127,8 @@ public class WordsbookTab extends ListFragment implements LoaderManager.LoaderCa
             protected Cursor onLoadInBackground() {
                 ExamDbFacade examDbFacade =
                         new ExamDbFacade(new ExamDbHelper(parentActivity));
-                Cursor c = examDbFacade.getCursorForTranslations(
-                        ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
+                Cursor c = examDbFacade.queryTranslationsCursor(
+                        ExamDbContract.WordsTable.DEFAULT_BOOK_ID, null, null);
                 if (c != null) {
                     // Ensure the cursor window is filled
                     c.getCount();

@@ -33,6 +33,7 @@ public class WordbookCursorAdapter extends CursorAdapter {
         TextView foreignText = (TextView) v.findViewById(R.id.foreign_text_li);
         TextView nativeLang = (TextView) v.findViewById(R.id.native_lang_li);
         TextView nativeText = (TextView) v.findViewById(R.id.native_text_li);
+        TextView learnedRating = (TextView) v.findViewById(R.id.learned_rating);
 
         TranslationEntry te = TranslationEntry.fromCursor(cursor);
 
@@ -40,5 +41,6 @@ public class WordbookCursorAdapter extends CursorAdapter {
         foreignText.setText(te.getSrcText().getVal());
         nativeLang.setText(te.getTargetText().getLang().toString());
         nativeText.setText(te.getTargetText().getVal());
+        learnedRating.setText("Rating: " + String.valueOf(te.getRating()));
     }
 }

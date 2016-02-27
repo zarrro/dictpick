@@ -6,6 +6,7 @@ import android.os.Parcelable;
 import com.peevs.dictpick.Language;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Created by zarrro on 14.9.2015 г..
@@ -40,8 +41,26 @@ public class TestQuestion extends Question implements Parcelable {
         }
     }
 
-    public TestQuestion(TranslationEntry question) {
-        super(question);
+    public TestQuestion(TranslationEntry translation) {
+        super(translation);
+    }
+
+    public void setQuestion(TranslationEntry translationEntry) {
+        question = translationEntry;
+        // re-initialize the correct option TextEntry
+        if(inverse) {
+            options[correctOptionIndex] = new TextEntry(question.getSrcText(), question.getId());
+        } else {
+            options[correctOptionIndex] = new TextEntry(question.getTargetText(), question.getId());
+        }
+    }
+
+
+
+    protected boolean isAnswerCorrect(Object answer) {
+        if(!(answer instanceof Integer))
+            throw new IllegalArgumentException("answer is not integer, answer index is expected");
+        return ((Integer) answer).intValue() == getCorrectOptionIndex();
     }
 
     public static final Parcelable.Creator<TestQuestion> CREATOR
@@ -85,7 +104,7 @@ public class TestQuestion extends Question implements Parcelable {
         return correctOptionIndex;
     }
 
-    public TextEntry getCorrectOptionWordEntry() {
+    public TextEntry getCorrectAnswer() {
         return options[correctOptionIndex];
     }
 
@@ -98,11 +117,26 @@ public class TestQuestion extends Question implements Parcelable {
     }
 
     @Override
+    protected int getCoeficientForCorrect() {
+        return 4;
+    }
+
+    @Override
+    protected int getCoeficientForWrong() {
+        return 2;
+    }
+
+    @Override
     public String toString() {
         return "TestQuestion{" +
                 "question=" + question +
                 ", options=" + Arrays.toString(options) +
                 ", correctOptionIndex=" + correctOptionIndex +
                 '}';
+    }
+
+    @Override
+    public Type getType() {
+        return Type.TEST;
     }
 }
