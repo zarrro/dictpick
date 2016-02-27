@@ -14,7 +14,8 @@ public class Utils {
     /**
      * Generates array with size n, with unique (no duplicated numbers) in the range 0 to rangeSize.
      *
-     * @param n         - how many random numbers to be generated, if n > rangeSize rangeSize numbers will be returned
+     * @param n         - how many random numbers to be generated, if n > rangeSize rangeSize
+     *                  numbers will be returned
      * @param rangeSize - range of the random numbers generated
      * @param rand      - java.util.Random instance to be used
      * @return - array with unique random numbers in the range from 0 to rangeSize
@@ -41,8 +42,8 @@ public class Utils {
             // next free
             int j = 0, candidate = 0;
             for (; j < generated.length
-                    && generated[(candidate = (randNumber + j) % generated.length)] == MARK_AS_GENARATED; j++)
-                ;
+                    && generated[(candidate = (randNumber + j) %
+                    generated.length)] == MARK_AS_GENARATED; j++);
             generated[candidate] = MARK_AS_GENARATED;
             result[i] = candidate;
         }

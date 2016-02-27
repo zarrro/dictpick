@@ -45,17 +45,35 @@ public class TestQuestion extends Question implements Parcelable {
         super(translation);
     }
 
-    public void setQuestion(TranslationEntry translationEntry) {
-        question = translationEntry;
-        // re-initialize the correct option TextEntry
-        if(inverse) {
-            options[correctOptionIndex] = new TextEntry(question.getSrcText(), question.getId());
-        } else {
-            options[correctOptionIndex] = new TextEntry(question.getTargetText(), question.getId());
+    public void setQuestion(TranslationEntry questionTranslationEntry) {
+        question = questionTranslationEntry;
+
+        /* Re-initialize the correct option TextEntry. It may happen that the given entry already
+        exists in the array of options. In this case, just update the correctOption index to match
+        that entry in the array. If the given Question translation entry doesn't exists in the
+        options array, then set it at the current correctOptionIndex.
+        */
+
+        boolean alreadyExistsInTheOptions = false;
+        TextEntry[] answers = getOptions();
+        for (int i = 0; i < answers.length; ++i) {
+            if(answers[i].getId() == questionTranslationEntry.getId()) {
+                setCorrectOptionIndex(i);
+                alreadyExistsInTheOptions = true;
+                break;
+            }
+        }
+
+        if(!alreadyExistsInTheOptions) {
+            if (inverse) {
+                options[correctOptionIndex] = new TextEntry(question.getSrcText(),
+                        question.getId());
+            } else {
+                options[correctOptionIndex] = new TextEntry(question.getTargetText(),
+                        question.getId());
+            }
         }
     }
-
-
 
     protected boolean isAnswerCorrect(Object answer) {
         if(!(answer instanceof Integer))
@@ -104,6 +122,7 @@ public class TestQuestion extends Question implements Parcelable {
         return correctOptionIndex;
     }
 
+    @Override
     public TextEntry getCorrectAnswer() {
         return options[correctOptionIndex];
     }

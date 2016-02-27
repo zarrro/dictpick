@@ -90,8 +90,7 @@ public class ExamTab extends Fragment {
                     answerStats.getSuccessRate());
         }
     }
-
-
+    
     /**
      * Factory for the test question answer views.
      */

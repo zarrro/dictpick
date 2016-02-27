@@ -6,6 +6,7 @@ import com.peevs.dictpick.Language;
 import com.peevs.dictpick.model.OpenQuestion;
 import com.peevs.dictpick.model.Question;
 import com.peevs.dictpick.model.TestQuestion;
+import com.peevs.dictpick.model.TextEntry;
 import com.peevs.dictpick.model.TranslationEntry;
 
 import java.util.List;
@@ -42,12 +43,13 @@ public class QuestionFactory {
         TranslationEntry translation = translations.get(0);
 
         Question result;
-        switch (byRating(translation.getRating())) {
+        switch (selectTypeByRating(translation.getRating())) {
             case TEST:
                 // we call get randomTestQueston TestQuestion instance with initialized alternatives
                 // options, then we just reinitialize the translation for the question
                 TestQuestion t = examDb.getRandomTestQuestion(fLang, nLang,
                         TestQuestion.WRONG_OPTIONS_COUNT, ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
+
                 t.setQuestion(translation);
                 result = t;
                 break;
@@ -61,7 +63,7 @@ public class QuestionFactory {
         return result;
     }
 
-    private Question.Type byRating(int rating) {
+    private Question.Type selectTypeByRating(int rating) {
         // bigger ratings has bigger chances to get OPEN question
         int r = rand.nextInt(MAX_RATING);
         if(r <= rating) {
