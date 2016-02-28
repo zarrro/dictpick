@@ -16,8 +16,11 @@ public class TranslationEntry {
     private final AtomicLong atomicId;
     private final AtomicInteger rating;
     private final Text srcText;
-
     private final Text targetText;
+
+    // NOTE: currently bookId is private constant. To be made modifiable when functionality
+    // for multiple books support is needed.
+    private final int bookId = ExamDbContract.WordsTable.DEFAULT_BOOK_ID;
 
     public TranslationEntry(long id, Text srcText, Text targetText) {
         this(id, srcText, targetText, 0);
@@ -98,6 +101,10 @@ public class TranslationEntry {
 
     public int getRating() {
         return rating.get();
+    }
+
+    public int getBookId() {
+        return bookId;
     }
 
     public void setRating(int rating) {

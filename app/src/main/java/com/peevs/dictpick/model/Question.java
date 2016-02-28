@@ -10,7 +10,8 @@ public abstract class Question {
         OPEN
     }
 
-    private static final int MAX_RATING = 1000;
+    public static final int MAX_RATING = 1000;
+    public static final int MIN_RATING = 0;
 
     protected boolean inverse;
     protected TranslationEntry question;
@@ -54,8 +55,8 @@ public abstract class Question {
     private void updateOnWrongAnswer() {
         int newRating = question.getRating() - (MAX_RATING - question.getRating())
                 / getCoeficientForWrong();
-        if (newRating <= 0) {
-            question.setRating(0);
+        if (newRating <= MIN_RATING) {
+            question.setRating(MIN_RATING);
         } else {
             question.setRating(newRating);
         }

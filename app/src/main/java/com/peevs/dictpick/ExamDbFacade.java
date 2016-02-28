@@ -97,35 +97,37 @@ public class ExamDbFacade {
      *
      * @param te - TranslationEntry instance to be persisted.
      */
-    public void saveTranslation(TranslationEntry te, int bookid) {
-
+    public void saveTranslation(TranslationEntry te) {
         Log.i(TAG, "saveTranslation - translationEntry: " + te.toString());
-
         SQLiteDatabase examDb = null;
         try {
             examDb = sqliteHelper.getWritableDatabase();
-
-            ContentValues values = new ContentValues();
-            values.put(ExamDbContract.WordsTable.S_TEXT, te.getSrcText().getVal());
-            values.put(ExamDbContract.WordsTable.T_TEXT, te.getTargetText().getVal());
-            values.put(ExamDbContract.WordsTable.S_LANG, te.getSrcText().getLang().toString());
-            values.put(ExamDbContract.WordsTable.T_LANG, te.getTargetText().getLang().toString());
-            values.put(ExamDbContract.WordsTable.RATING, te.getRating());
-            values.put(ExamDbContract.WordsTable.BOOKID, bookid);
-            if (te.getId() <= 0) {
-                te.setId(examDb.insertOrThrow(ExamDbContract.WordsTable.TABLE_NAME, "null", values));
-                Log.i(TAG, "added new translation " + te.getId());
-            } else {
-                examDb.update(ExamDbContract.WordsTable.TABLE_NAME, values,
-                        ExamDbContract.WordsTable._ID + " = " + te.getId(), null);
-                Log.i(TAG, "updated existing translation " + te.getId());
-            }
+            saveTranslation(examDb, te);
         } catch (SQLiteConstraintException e) {
             throw new IllegalStateException("translation %s -> %s already exists");
         } finally {
             if (examDb != null) {
                 examDb.close();
             }
+        }
+    }
+
+    private void saveTranslation(SQLiteDatabase writableExamDb, TranslationEntry te) {
+        ContentValues values = new ContentValues();
+        values.put(ExamDbContract.WordsTable.S_TEXT, te.getSrcText().getVal());
+        values.put(ExamDbContract.WordsTable.T_TEXT, te.getTargetText().getVal());
+        values.put(ExamDbContract.WordsTable.S_LANG, te.getSrcText().getLang().toString());
+        values.put(ExamDbContract.WordsTable.T_LANG, te.getTargetText().getLang().toString());
+        values.put(ExamDbContract.WordsTable.RATING, te.getRating());
+        values.put(ExamDbContract.WordsTable.BOOKID, te.getBookId());
+        if (te.getId() <= 0) {
+            te.setId(writableExamDb.insertOrThrow(ExamDbContract.WordsTable.TABLE_NAME,
+                    "null", values));
+            Log.i(TAG, "added new translation " + te.getId());
+        } else {
+            writableExamDb.update(ExamDbContract.WordsTable.TABLE_NAME, values,
+                    ExamDbContract.WordsTable._ID + " = " + te.getId(), null);
+            Log.i(TAG, "updated existing translation " + te.getId());
         }
     }
 
@@ -144,11 +146,18 @@ public class ExamDbFacade {
         }
     }
 
-    public long saveAnswer(long questionWordId, Question.Type type, Object wrongAnswer) {
-        Log.i(TAG, "saveAnswer: ");
+    /**
+     * Updates Exam DB stats for the question. To be invoked after each question was answered.
+     * NOTE: The method doesn't detect whether checkAnswer was actually invoked or not for the
+     * question.
+     */
+    public long saveAnswer(Question q) {
+        Log.i(TAG, "saveAnswer invoked");
 
         Integer wrongWordId = null;
         String wrongText = null;
+
+        Object wrongAnswer = q.getLastWrongAnswer();
         if(wrongAnswer != null) {
             if (wrongAnswer instanceof Integer) {
                 wrongWordId = (Integer) wrongAnswer;
@@ -160,9 +169,24 @@ public class ExamDbFacade {
         SQLiteDatabase examDb = null;
         try {
             examDb = sqliteHelper.getWritableDatabase();
-            ContentValues values = new ContentValues();
-            values.put(ExamDbContract.AnswerStats.QUESTION_WORD_ID, questionWordId);
-            values.put(ExamDbContract.AnswerStats.QUESTION_TYPE, type.toString());
+
+
+            // With each answer, all other words ratings is decreased a little, so they will have
+            // precedence in the rating selection compared to the most recently answered. This is
+            // need to avoid the case where for example after give answer the rating is 250,
+            // and no matter that there is other older words with the same rating again the
+            // same question is selected by the rating base algorithm.
+            examDb.execSQL("UPDATE " + ExamDbContract.WordsTable.TABLE_NAME + " SET " +
+                            getSqlUpdateDecreaseInteger(ExamDbContract.WordsTable.RATING, 1) +
+                    " WHERE " + ExamDbContract.WordsTable.RATING + " > " + Question.MIN_RATING);
+
+            // Update the rating of the translation entry of the question.
+            saveTranslation(examDb, q.getQuestion());
+
+            // Add entry in the answer stats table
+                    ContentValues values = new ContentValues();
+            values.put(ExamDbContract.AnswerStats.QUESTION_WORD_ID, q.getQuestion().getId());
+            values.put(ExamDbContract.AnswerStats.QUESTION_TYPE, q.getType().toString());
             values.put(ExamDbContract.AnswerStats.WRONG_ANSWER_WORD_ID, wrongWordId);
             values.put(ExamDbContract.AnswerStats.WRONG_ANSWER_TEXT, wrongText);
             values.put(ExamDbContract.AnswerStats.TIME_STAMP, new Date().toString());
@@ -172,6 +196,10 @@ public class ExamDbFacade {
                 examDb.close();
             }
         }
+    }
+
+    String getSqlUpdateDecreaseInteger(String columnName, int decrease) {
+        return  String.format("%1$s = %1$s - %2$s", columnName, decrease);
     }
 
     public AnswerStats queryAnswerStats() {

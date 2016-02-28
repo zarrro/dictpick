@@ -67,16 +67,12 @@ public class ExamTab extends Fragment {
     class UpdateStatsTask extends
             AsyncTask<Question, Void, ExamDbFacade.AnswerStats> {
         @Override
-        protected ExamDbFacade.AnswerStats doInBackground(Question... params) {
-            if (params.length != 1)
+        protected ExamDbFacade.AnswerStats doInBackground(Question... questions) {
+            if (questions.length != 1)
                 throw new IllegalArgumentException();
 
-            Question q = params[0];
-
             ExamDbFacade examDb = new ExamDbFacade(new ExamDbHelper(parentActivity));
-            examDb.saveAnswer(q.getQuestion().getId(), q.getType(), q.getLastWrongAnswer());
-            examDb.saveTranslation(currentQuestion.getQuestion(),
-                    ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
+            examDb.saveAnswer(questions[0]);
 
             // translation rating might have changes, so we notify the adapter for the wordsbook tab
             parentActivity.getContentResolver().notifyChange(
@@ -99,14 +95,17 @@ public class ExamTab extends Fragment {
         private static final int TEST_OPTION_TEXT_SIZE = 16;
 
         private class AnswerHandler implements View.OnClickListener {
-            final Integer answerIndex;
-            final AtomicBoolean answered;
-            TestQuestion q;
+            private final Integer answerIndex;
+            private final AtomicBoolean answered;
+            private final TestQuestion q;
+            private final TextView[] answerViews;
 
-            private AnswerHandler(Integer answerIndex, TestQuestion q, AtomicBoolean answered) {
+            private AnswerHandler(Integer answerIndex, TestQuestion q, AtomicBoolean answered,
+                                  TextView[] answerViews) {
                 this.answerIndex = answerIndex;
-                this.answered = answered;
                 this.q = q;
+                this.answered = answered;
+                this.answerViews = answerViews;
             }
 
             @Override
@@ -116,17 +115,19 @@ public class ExamTab extends Fragment {
                         v.setBackgroundColor(Color.GREEN);
                     } else {
                         v.setBackgroundColor(Color.RED);
+                        // show the correct answer
+                        answerViews[q.getCorrectOptionIndex()].setBackgroundColor(Color.GREEN);
                     }
                     updateStats(q);
                 }
             }
         }
 
-        AnswerHandler[] createAnswerHandlers(TestQuestion q) {
+        private AnswerHandler[] createAnswerHandlers(TestQuestion q, TextView[] answerViews) {
             AnswerHandler[] result = new AnswerHandler[q.getOptions().length];
             AtomicBoolean answeredFlag = new AtomicBoolean(false);
             for (int i = 0; i < result.length; ++i) {
-                result[i] = new AnswerHandler(i, q, answeredFlag);
+                result[i] = new AnswerHandler(i, q, answeredFlag, answerViews);
             }
             return result;
         }
@@ -141,7 +142,7 @@ public class ExamTab extends Fragment {
         public List<TextView> createAnswerViews(TestQuestion q) {
 
             TextView[] answerViews = new TextView[q.getOptions().length];
-            AnswerHandler[] answerHandlers = createAnswerHandlers(q);
+            AnswerHandler[] answerHandlers = createAnswerHandlers(q, answerViews);
 
             for(int i = 0; i < answerViews.length; ++i) {
                 answerViews[i] = wordEntryToOptionView(q.getOptions()[i]);

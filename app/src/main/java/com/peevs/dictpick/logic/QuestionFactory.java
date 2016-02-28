@@ -17,8 +17,6 @@ import java.util.Random;
  */
 public class QuestionFactory {
 
-    public static final int MAX_RATING = 1000;
-
     final Random rand;
 
     private ExamDbFacade examDb;
@@ -65,7 +63,7 @@ public class QuestionFactory {
 
     private Question.Type selectTypeByRating(int rating) {
         // bigger ratings has bigger chances to get OPEN question
-        int r = rand.nextInt(MAX_RATING);
+        int r = rand.nextInt(Question.MAX_RATING);
         if(r <= rating) {
             return Question.Type.OPEN;
         } else {

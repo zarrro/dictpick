@@ -35,7 +35,7 @@ public class SaveTranslationEntryTask extends AsyncTask<Void, Void, Long>
                 new ExamDbFacade(new ExamDbHelper(context));
         // insert new or save existing to DB
 
-        examDbFacade.saveTranslation(te, ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
+        examDbFacade.saveTranslation(te);
 
         context.getContentResolver().notifyChange(
                 Uri.parse(ExamDbContract.WordsTable.CONTENT_URI), null);
