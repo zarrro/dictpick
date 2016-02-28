@@ -57,8 +57,9 @@ public class Translator {
     public static List<String> translate(String srcText, String srcLang, String targetLang,
                                          String mode, String charset) throws IOException {
 
-        StringBuilder httpQueryString = new StringBuilder(String.format(QUERY_STRING_TEMPLATE,
-                srcLang, targetLang, mode, charset, charset));
+        StringBuilder httpQueryString = new StringBuilder();
+        httpQueryString.append(String.format(QUERY_STRING_TEMPLATE,
+                srcLang.toLowerCase(), targetLang.toLowerCase(), mode, charset, charset));
         httpQueryString.append(kc());
         httpQueryString.append(tkk(srcText));
         String encodedQ = URLEncoder.encode(srcText, charset);
@@ -90,7 +91,8 @@ public class Translator {
                         } else {
                             String word = sw.toString();
                             // skip src lang and text in the result
-                            if (!(word.equals(srcLang) || word.equalsIgnoreCase(srcText))) {
+                            if (!(word.equalsIgnoreCase(srcLang) ||
+                                    word.equalsIgnoreCase(srcText))) {
                                 res.add(sw.toString());
                             }
                             sw = null;

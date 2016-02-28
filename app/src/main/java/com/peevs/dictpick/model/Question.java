@@ -42,13 +42,23 @@ public abstract class Question {
     }
 
     private void updateOnCorrectAnswer() {
-        question.setRating(question.getRating() + (MAX_RATING - question.getRating())
-                / getCoeficientForCorrect());
+        int newRating = question.getRating() + (MAX_RATING - question.getRating())
+                / getCoeficientForCorrect();
+        if (newRating >= MAX_RATING) {
+            question.setRating(MAX_RATING);
+        } else {
+            question.setRating(newRating);
+        }
     }
 
     private void updateOnWrongAnswer() {
-        question.setRating(question.getRating() - (MAX_RATING - question.getRating())
-                / getCoeficientForWrong());
+        int newRating = question.getRating() - (MAX_RATING - question.getRating())
+                / getCoeficientForWrong();
+        if (newRating <= 0) {
+            question.setRating(0);
+        } else {
+            question.setRating(newRating);
+        }
     }
 
     public TranslationEntry getQuestion() {
@@ -60,11 +70,11 @@ public abstract class Question {
     protected abstract int getCoeficientForWrong();
 
     public boolean checkAnswer(Object answer) {
-        if(answer == null)
+        if (answer == null)
             throw new IllegalArgumentException("answer is null");
 
         boolean isCorrect = isAnswerCorrect(answer);
-        if(isCorrect) {
+        if (isCorrect) {
             updateOnCorrectAnswer();
             lastWrongAnswer = -1;
         } else {

@@ -24,16 +24,16 @@ import com.peevs.dictpick.model.TranslationEntry;
 
 import java.util.List;
 
-import static com.peevs.dictpick.view.ContextMenuItem.*;
-
-enum ContextMenuItem {
-    EDIT, DELETE
-}
+import static com.peevs.dictpick.view.WordsbookTab.ContextMenuItem.*;
 
 /**
  * Created by zarrro on 03.01.16.
  */
 public class WordsbookTab extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    enum ContextMenuItem {
+        EDIT, DELETE
+    }
 
     private static final int WORD_DETAILS_REQUEST_CODE = 10;
 

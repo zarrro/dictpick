@@ -26,9 +26,6 @@ import java.util.Random;
  */
 public class ExamDbFacade {
 
-    public static final int ID_NOT_EXISTS = -1;
-    public static final int UNIQUE_CONTRAINT_FAILED_ERR_CODE = -2067;
-
     public static class AlreadyExistsException extends Exception {
 
         public AlreadyExistsException() {
@@ -63,8 +60,11 @@ public class ExamDbFacade {
         }
     }
 
+    public static final int ID_NOT_EXISTS = -1;
+    public static final int UNIQUE_CONTRAINT_FAILED_ERR_CODE = -2067;
+    private static final String TAG = ExamDbFacade.class.getSimpleName();
+
     private final SQLiteOpenHelper sqliteHelper;
-    private static final String TAG = ExamDbHelper.class.getSimpleName();
     private Random rand = new Random(System.currentTimeMillis());
 
     public ExamDbFacade(SQLiteOpenHelper sqliteHelper) {
@@ -334,7 +334,7 @@ public class ExamDbFacade {
             if (srcLang != null) {
                 whereClauseBuilder.append(ExamDbContract.WordsTable.S_LANG);
                 whereClauseBuilder.append(" = ");
-                whereClauseBuilder.append("'" + srcLang.toString().toLowerCase() + "'");
+                whereClauseBuilder.append("'" + srcLang.toString() + "'");
                 and = true;
             }
             if (and) {
@@ -343,7 +343,7 @@ public class ExamDbFacade {
             if (srcLang != null) {
                 whereClauseBuilder.append(ExamDbContract.WordsTable.T_LANG);
                 whereClauseBuilder.append(" = ");
-                whereClauseBuilder.append("'" + targetLang.toString().toLowerCase() + "'");
+                whereClauseBuilder.append("'" + targetLang.toString() + "'");
                 and = true;
             }
             if (and) {
@@ -366,9 +366,9 @@ public class ExamDbFacade {
             );
 
             if (c == null || c.getCount() == 0) {
-                Log.d(TAG, "getAllTranslations - no translations retrieved");
+                Log.d(TAG, "initTranslationsCursor - no translations retrieved");
             } else {
-                Log.d(TAG, "getAllTranslations - " + c.getCount() + " translations retrieved");
+                Log.d(TAG, "initTranslationsCursor - " + c.getCount() + " translations retrieved");
             }
         } finally {
             if (examDb != null) {
@@ -449,11 +449,10 @@ public class ExamDbFacade {
                 return null;
             }
             result = new ArrayList<>(c.getCount());
-            int i = 0;
-            while (c.moveToNext()) {
+            c.moveToFirst();
+            do {
                 result.add(TranslationEntry.fromCursor(c));
-                ++i;
-            }
+            } while (c.moveToNext());
         } finally {
             if (c != null) c.close();
             if (examDb != null) examDb.close();
