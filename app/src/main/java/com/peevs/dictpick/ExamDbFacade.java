@@ -158,7 +158,7 @@ public class ExamDbFacade {
         String wrongText = null;
 
         Object wrongAnswer = q.getLastWrongAnswer();
-        if(wrongAnswer != null) {
+        if (wrongAnswer != null) {
             if (wrongAnswer instanceof Integer) {
                 wrongWordId = (Integer) wrongAnswer;
             } else {
@@ -177,14 +177,14 @@ public class ExamDbFacade {
             // and no matter that there is other older words with the same rating again the
             // same question is selected by the rating base algorithm.
             examDb.execSQL("UPDATE " + ExamDbContract.WordsTable.TABLE_NAME + " SET " +
-                            getSqlUpdateDecreaseInteger(ExamDbContract.WordsTable.RATING, 1) +
+                    getSqlUpdateDecreaseInteger(ExamDbContract.WordsTable.RATING, 1) +
                     " WHERE " + ExamDbContract.WordsTable.RATING + " > " + Question.MIN_RATING);
 
             // Update the rating of the translation entry of the question.
             saveTranslation(examDb, q.getQuestion());
 
             // Add entry in the answer stats table
-                    ContentValues values = new ContentValues();
+            ContentValues values = new ContentValues();
             values.put(ExamDbContract.AnswerStats.QUESTION_WORD_ID, q.getQuestion().getId());
             values.put(ExamDbContract.AnswerStats.QUESTION_TYPE, q.getType().toString());
             values.put(ExamDbContract.AnswerStats.WRONG_ANSWER_WORD_ID, wrongWordId);
@@ -199,7 +199,7 @@ public class ExamDbFacade {
     }
 
     String getSqlUpdateDecreaseInteger(String columnName, int decrease) {
-        return  String.format("%1$s = %1$s - %2$s", columnName, decrease);
+        return String.format("%1$s = %1$s - %2$s", columnName, decrease);
     }
 
     public AnswerStats queryAnswerStats() {
@@ -348,14 +348,7 @@ public class ExamDbFacade {
         try {
             examDb = sqliteHelper.getReadableDatabase();
 
-            String[] projection = {
-                    ExamDbContract.WordsTable.S_TEXT,
-                    ExamDbContract.WordsTable.T_TEXT,
-                    ExamDbContract.WordsTable._ID,
-                    ExamDbContract.WordsTable.S_LANG,
-                    ExamDbContract.WordsTable.T_LANG,
-                    ExamDbContract.WordsTable.RATING
-            };
+
 
             StringBuilder whereClauseBuilder = new StringBuilder();
             boolean and = false;
@@ -384,7 +377,7 @@ public class ExamDbFacade {
 
             c = examDb.query(
                     ExamDbContract.WordsTable.TABLE_NAME,  // The table to query
-                    projection,             // The columns to return
+                    TranslationEntry.dbProjection(),       // The columns to return
                     whereClauseBuilder.toString(), // The columns for the WHERE clause
                     null,                   // The values for the WHERE clause
                     null,                   // don't group the rows
@@ -461,6 +454,55 @@ public class ExamDbFacade {
                 i++;
             } while (c.moveToNext());
         return ret;
+    }
+
+    public List<TranslationEntry> listTranslationsWithLowestRating(Language sl, Language tl,
+                                                                   int book_id) {
+        Log.d(TAG, "listTranslationsWithLowestRating invoked");
+
+        SQLiteDatabase examDb = null;
+        Cursor c = null;
+        List<TranslationEntry> result = null;
+        try {
+            examDb = sqliteHelper.getReadableDatabase();
+
+            c = examDb.rawQuery(String.format(
+                    "select %1$s from %2$s order by %1$s limit 1",
+                    ExamDbContract.WordsTable.RATING,
+                    ExamDbContract.WordsTable.TABLE_NAME), null);
+
+            if(c.getCount() == 0) {
+                // empty db
+                return null;
+            }
+
+            c.moveToFirst();
+            int minRating = c.getInt(0);
+
+            c = examDb.query(
+                    ExamDbContract.WordsTable.TABLE_NAME,  // The table to query
+                    TranslationEntry.dbProjection(),       // The columns to return
+                    // The columns for the WHERE clause
+                    ExamDbContract.WordsTable.RATING + " = " + minRating,
+                    null,                   // The values for the WHERE clause
+                    null,                   // don't group the rows
+                    null,                   // don't filter by row groups
+                    null                // order by column asc, desc
+            );
+
+            Log.d(TAG, String.format("%s translation with the minimal rating %s queried",
+                    c.getCount(), minRating));
+
+            result = new ArrayList<>(c.getCount());
+            c.moveToFirst();
+            do {
+                result.add(TranslationEntry.fromCursor(c));
+            } while (c.moveToNext());
+        } finally {
+            if (c != null) c.close();
+            if (examDb != null) examDb.close();
+        }
+        return result;
     }
 
     public List<TranslationEntry> queryTranslations(Language sl, Language tl, int book_id,

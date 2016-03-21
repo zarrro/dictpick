@@ -30,7 +30,6 @@ import com.peevs.dictpick.model.TestQuestion;
 import com.peevs.dictpick.model.TextEntry;
 
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -128,6 +127,8 @@ public class ExamTab extends Fragment {
             AtomicBoolean answeredFlag = new AtomicBoolean(false);
             for (int i = 0; i < result.length; ++i) {
                 result[i] = new AnswerHandler(i, q, answeredFlag, answerViews);
+
+
             }
             return result;
         }

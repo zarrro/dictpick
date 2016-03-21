@@ -99,6 +99,17 @@ public class TranslationEntry {
         return new TranslationEntry(id, st, tt, rating);
     }
 
+    public static String[] dbProjection() {
+        return new String[] {
+                ExamDbContract.WordsTable.S_TEXT,
+                ExamDbContract.WordsTable.T_TEXT,
+                ExamDbContract.WordsTable._ID,
+                ExamDbContract.WordsTable.S_LANG,
+                ExamDbContract.WordsTable.T_LANG,
+                ExamDbContract.WordsTable.RATING
+        };
+    }
+
     public int getRating() {
         return rating.get();
     }

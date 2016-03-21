@@ -32,13 +32,12 @@ public class QuestionFactory {
 
     public Question getTestQuestionByRating() {
 
-        List<TranslationEntry> translations = examDb.queryTranslations(fLang, nLang,
-                ExamDbContract.WordsTable.DEFAULT_BOOK_ID, ExamDbContract.WordsTable.RATING + " ASC",
-                1);
+        List<TranslationEntry> translations = examDb.listTranslationsWithLowestRating(fLang, nLang,
+                ExamDbContract.WordsTable.DEFAULT_BOOK_ID);
 
         if(translations.isEmpty()) return null;
 
-        TranslationEntry translation = translations.get(0);
+        TranslationEntry translation = translations.get(rand.nextInt(translations.size()));
 
         Question result;
         switch (selectTypeByRating(translation.getRating())) {
